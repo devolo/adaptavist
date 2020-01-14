@@ -969,7 +969,7 @@ class Adaptavist():
 
         test_cases_list_of_dicts = []
         for test_case_key in test_cases:
-            test_cases_list_of_dicts.append({"testCaseKey": test_case_key, "environment": environment, "executedBy": get_executor()})
+            test_cases_list_of_dicts.append({"testCaseKey": test_case_key, "environment": environment, "executedBy": get_executor(), "assignedTo": get_executor()})
 
         request_url = self.adaptavist_api_url + "/testrun"
 
@@ -1184,6 +1184,7 @@ class Adaptavist():
                 continue
             data = {key: value for key, value in result.items()}
             data["executedBy"] = get_executor()
+            data["assignedTo"] = data["executedBy"]
             if environment:
                 data["environment"] = environment
             request_data.append(data)
@@ -1285,6 +1286,7 @@ class Adaptavist():
         request_data = {}
         request_data["environment"] = environment
         request_data["executedBy"] = get_executor()
+        request_data["assignedTo"] = request_data["executedBy"]
         request_data["status"] = status
         if comment is not None:
             request_data["comment"] = comment
@@ -1354,6 +1356,7 @@ class Adaptavist():
         request_data = {}
         request_data["environment"] = environment
         request_data["executedBy"] = get_executor()
+        request_data["assignedTo"] = request_data["executedBy"]
         request_data["status"] = status
         if comment is not None:
             request_data["comment"] = comment
@@ -1489,6 +1492,7 @@ class Adaptavist():
         request_data = {}
         request_data["environment"] = environment
         request_data["executedBy"] = get_executor()
+        request_data["assignedTo"] = request_data["executedBy"]
         request_data["status"] = test_result.get("status")  # mandatory, to keep test result status unchanged
         request_data["scriptResults"] = script_results
 
