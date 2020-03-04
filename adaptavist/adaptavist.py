@@ -326,6 +326,77 @@ class Adaptavist():
 
         return test_cases
 
+    def create_test_case(self, project_key, test_case_name, **kwargs):
+        """
+        Create a new test case.
+
+        :param project_key: project key of the test case ex. "TEST"
+        :type project_key: str
+        :param test_case_name: name of the test case to be created
+        :type test_case_name: str
+
+        :param kwargs: Arbitrary list of keyword arguments
+                folder: name of the folder where to create the new test case
+                objective: objective of the new test case, i.e. the overall description of its purpose
+                precondition: precondition(s) to be given in order to be able to execute this test case
+                priority: priority of the test case (e.g. "Low", "Normal", "High")
+                estimated_time: estimated execution time in seconds. ex. "5"
+                labels: list of labels to be added
+                issue_links: list of issue keys to link the new test case to
+                steps: list of step descriptions in json format like {"description": <string>, "expectedResult": <string>}}
+
+        :return: key of the test plan created
+        :rtype: str
+        """
+        self.logger.debug("create_test_case(\"%s\", \"%s\")", project_key, test_case_name)
+
+        folder = kwargs.pop("folder", None)
+        objective = kwargs.pop("objective", None)
+        precondition = kwargs.pop("precondition", None)
+        priority = kwargs.pop("priority", None)
+        estimated_time = kwargs.pop("estimated_time", None)
+        labels = kwargs.pop("labels", None) or []
+        issue_links = kwargs.pop("issue_links", None) or []
+        steps = kwargs.pop("steps", None) or []
+
+        assert not kwargs, "Unknown arguments: %r" % kwargs
+
+        folder = ("/" + folder).replace("//", "/") if folder else folder or None
+        if folder and folder not in self.get_folders(project_key=project_key, folder_type="TEST_CASE"):
+            self.create_folder(project_key=project_key, folder_type="TEST_CASE", folder_name=folder)
+
+        request_url = self.adaptavist_api_url + "/testcase"
+
+        request_data = {"projectKey": project_key,
+                        "name": test_case_name,
+                        "folder": folder,
+                        "status": "Approved",
+                        "objective": objective,
+                        "precondition": precondition,
+                        "priority": priority,
+                        "estimatedTime": estimated_time * 1000 if estimated_time is not None else None,
+                        "labels": labels,
+                        "issueLinks": [x.strip() for x in issue_links.split(",")] if isinstance(issue_links, str) else issue_links,
+                        "testScript": {"type": "STEP_BY_STEP", "steps": steps}}
+
+        try:
+            request = requests.post(request_url,
+                                    auth=self.authentication,
+                                    headers=self.headers,
+                                    data=json.dumps(request_data))
+            request.raise_for_status()
+        except HTTPError as ex:
+            # HttpPost: in case of status 400 request.text contains error messages
+            self.logger.error("request failed. %s %s", ex, request.text)
+            return None
+        except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as ex:
+            self.logger.error("request failed. %s", ex)
+            return None
+
+        response = request.json()
+
+        return response["key"]
+
     def edit_test_case(self, test_case_key, **kwargs):
         """
         Edit given test case.
@@ -335,7 +406,13 @@ class Adaptavist():
 
         :param kwargs: Arbitrary list of keyword arguments
                 folder: folder to move the test case into - if not given, folder is not changed - if set to None, folder will be (re-)moved to root
+                name: name of the test case
+                objective: objective of the test case, i.e. the overall description of its purpose
+                precondition: precondition(s) to be given in order to be able to execute this test case
+                priority: priority of the test case (e.g. "Low", "Normal", "High")
+                estimated_time: estimated execution time in seconds. ex. "5"
                 labels: list of labels to be added (add a "-" as first list entry to remove labels or to create a new list)
+                issue_links: list of issue keys to link the test case to (add a "-" as first list entry to remove links or to create a new list)
                 build_urls: list of build urls to be added (add a "-" as first list entry to remove urls or to create a new list)
                 code_bases: list of code base urls to be added (add a "-" as first list entry to remove urls or to create a new list)
 
@@ -347,7 +424,13 @@ class Adaptavist():
         keep_original_value = r"\{keep_original_value\}"
 
         folder = kwargs.pop("folder", keep_original_value)  # differ between folder not passed and folder set to None (to move to root)
+        name = kwargs.pop("name", None)
+        objective = kwargs.pop("objective", None)
+        precondition = kwargs.pop("precondition", None)
+        priority = kwargs.pop("priority", None)
+        estimated_time = kwargs.pop("estimated_time", None)
         labels = kwargs.pop("labels", None) or []
+        issue_links = kwargs.pop("issue_links", None) or []
         build_urls = kwargs.pop("build_urls", [])
         code_bases = kwargs.pop("code_bases", [])
 
@@ -369,7 +452,11 @@ class Adaptavist():
 
         response = {} if not request.text else request.json()
 
-        request_data = {}
+        request_data = {"name": name or response.get("name", None),
+                        "objective": objective or response.get("objective", None),
+                        "precondition": precondition or response.get("precondition", None),
+                        "priority": priority or response.get("priority", None),
+                        "estimatedTime": estimated_time * 1000 if estimated_time is not None else response.get("estimatedTime", None)}
 
         folder = response.get("folder", None) if folder == keep_original_value else (("/" + folder).replace("//", "/") if folder else folder or None)
         if folder != response.get("folder", None):
@@ -382,6 +469,12 @@ class Adaptavist():
         labels = update_list(current_values or [], labels)
         if labels != current_values:
             request_data.update({"labels": labels})
+
+        # append issue links to the current list of issue links or create new ones
+        current_values = response.get("issueLinks", [])
+        issue_links = update_list(current_values or [], issue_links)
+        if issue_links != current_values:
+            request_data.update({"issueLinks": issue_links})
 
         # handle custom fields
         current_values = response.get("customFields", {}).get("ci_server_url", "")
@@ -409,6 +502,34 @@ class Adaptavist():
         except HTTPError as ex:
             # HttpPut: in case of status 400 request.text contains error messages
             self.logger.error("request failed. %s %s", ex, request.text)
+            return False
+        except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as ex:
+            self.logger.error("request failed. %s", ex)
+            return False
+
+        return True
+
+    def delete_test_case(self, test_case_key):
+        """
+        Delete given test case.
+
+        :param test_case_key: test case key to be deleted. ex. "JQA-T1234"
+        :type test_case_key: str
+
+        :returns: True if succeeded, False if not
+        :rtype: bool
+        """
+        self.logger.debug("delete_test_case(\"%s\")", test_case_key)
+
+        request_url = self.adaptavist_api_url + "/testcase/" + test_case_key
+
+        try:
+            request = requests.delete(request_url,
+                                      auth=self.authentication,
+                                      headers=self.headers)
+            request.raise_for_status()
+        except HTTPError as ex:
+            self.logger.error("request failed. %s", ex)
             return False
         except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as ex:
             self.logger.error("request failed. %s", ex)
@@ -665,6 +786,8 @@ class Adaptavist():
 
         :param kwargs: Arbitrary list of keyword arguments
                 folder: name of the folder where to create the new test plan
+                objective: objective of the new test plan
+                labels: list of labels to be added
                 issue_links: list of issue keys to link the new test plan to
                 test_runs: list of test run keys to be linked to the test plan ex. ["TEST-R2","TEST-R7"]
 
@@ -674,6 +797,8 @@ class Adaptavist():
         self.logger.debug("create_test_plan(\"%s\", \"%s\")", project_key, test_plan_name)
 
         folder = kwargs.pop("folder", None)
+        objective = kwargs.pop("objective", None)
+        labels = kwargs.pop("labels", None) or []
         issue_links = kwargs.pop("issue_links", None) or []
         test_runs = kwargs.pop("test_runs", None) or []
 
@@ -689,6 +814,8 @@ class Adaptavist():
                         "name": test_plan_name,
                         "folder": folder,
                         "status": "Approved",
+                        "objective": objective,
+                        "labels": labels,
                         "issueLinks": [x.strip() for x in issue_links.split(",")] if isinstance(issue_links, str) else issue_links,
                         "testRunKeys": [x.strip() for x in test_runs.split(",")] if isinstance(test_runs, str) else test_runs}
 
@@ -719,8 +846,11 @@ class Adaptavist():
 
         :param kwargs: Arbitrary list of keyword arguments
                 folder: folder to move the test plan into
-                issue_links: list of issue keys to link the new test plan to
-                test_runs: list of test run keys to be linked/added to the test plan ex. ["TEST-R2","TEST-R7"]
+                name: name of the test plan
+                objective: objective of the test plan
+                labels: list of labels to be added (add a "-" as first list entry to remove labels or to create a new list)
+                issue_links: list of issue keys to link the test plan to (add a "-" as first list entry to remove links or to create a new list)
+                test_runs: list of test run keys to be linked/added to the test plan ex. ["TEST-R2","TEST-R7"] (add a "-" as first list entry to remove links or to create a new list)
 
         :returns: True if succeeded, False if not
         :rtype: bool
@@ -730,6 +860,9 @@ class Adaptavist():
         keep_original_value = r"\{keep_original_value\}"
 
         folder = kwargs.pop("folder", keep_original_value)  # differ between folder not passed and folder set to None (to move to root)
+        name = kwargs.pop("name", None)
+        objective = kwargs.pop("objective", None)
+        labels = kwargs.pop("labels", None) or []
         issue_links = kwargs.pop("issue_links", None) or []
         test_runs = kwargs.pop("test_runs", None) or []
 
@@ -751,13 +884,20 @@ class Adaptavist():
 
         response = {} if not request.text else request.json()
 
-        request_data = {}
+        request_data = {"name": name or response.get("name", None),
+                        "objective": objective or response.get("objective", None)}
 
         folder = response.get("folder", None) if folder == keep_original_value else (("/" + folder).replace("//", "/") if folder else folder or None)
         if folder != response.get("folder", None):
             if folder and folder not in self.get_folders(project_key=response.get("projectKey"), folder_type="TEST_PLAN"):
                 self.create_folder(project_key=response.get("projectKey"), folder_type="TEST_PLAN", folder_name=folder)
             request_data.update({"folder": folder})
+
+        # append labels to the current list of labels or create new one
+        current_values = response.get("labels", [])
+        labels = update_list(current_values or [], labels)
+        if labels != current_values:
+            request_data.update({"labels": labels})
 
         # append test runs to the current list of test runs or create new ones
         current_values = [test_run["key"] for test_run in response.get("testRuns", [])]
