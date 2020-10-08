@@ -480,12 +480,12 @@ class Adaptavist():
         current_values = response.get("customFields", {}).get("ci_server_url", "")
         build_urls = update_multiline_field(current_values or "", build_urls)
         if build_urls != current_values:
-            request_data.update({"customFields": {"ci_server_url": build_urls}})
+            request_data.setdefault("customFields", {})["ci_server_url"] = build_urls
 
         current_values = response.get("customFields", {}).get("code_base_url", "")
         code_bases = update_multiline_field(current_values, code_bases)
         if code_bases != current_values:
-            request_data.update({"customFields": {"code_base_url": code_bases}})
+            request_data.setdefault("customFields", {})["code_base_url"] = code_bases
 
         if not request_data:
             return True
