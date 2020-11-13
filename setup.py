@@ -5,7 +5,7 @@ setup(
     description="python package providing functionality for Jira Test Management (tm4j)",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    version="v1.1.1",
+    version="v1.1.2",
     url="https://github.com/devolo/adaptavist",
     author="Stephan Steinberg",
     author_email="stephan.steinberg@devolo.de",
@@ -13,7 +13,7 @@ setup(
     packages=["adaptavist"],
     platforms="any",
     python_requires=">=3.6",
-    install_requires=["requests", "requests_toolbelt"],
+    install_requires=["pbr", "requests_toolbelt", "requests"],
     keywords="python adaptavist kanoah tm4j jira test testmanagement report",
     classifiers=[
         "Intended Audience :: Developers",
