@@ -1089,7 +1089,7 @@ class Adaptavist():
                 test_plan_key: test plan key to link this test run to
                 test_cases: list of test case keys to be linked to the test run ex. ["TEST-T1026","TEST-T1027"]
                 environment: environment to distinguish multiple executions (call get_environments() to get a list of available ones)
-
+                unassigned_executor: executor and assigned to will be unassigned if true
         :return: key of the test run created
         :rtype: str
         """
@@ -1100,6 +1100,7 @@ class Adaptavist():
         test_plan_key = kwargs.pop("test_plan_key", None)
         test_cases = kwargs.pop("test_cases", [])
         environment = kwargs.pop("environment", None)
+        unassigned_executor = kwargs.pop("unassigned_executor", False)
 
         assert not kwargs, "Unknown arguments: %r" % kwargs
 
@@ -1107,9 +1108,14 @@ class Adaptavist():
         if folder and folder not in self.get_folders(project_key=project_key, folder_type="TEST_RUN"):
             self.create_folder(project_key=project_key, folder_type="TEST_RUN", folder_name=folder)
 
+        if unassigned_executor:
+            assighed_data = {}
+        else:
+            assighed_data = {"executedBy": get_executor(), "assignedTo": get_executor()}
+
         test_cases_list_of_dicts = []
         for test_case_key in test_cases:
-            test_cases_list_of_dicts.append({"testCaseKey": test_case_key, "environment": environment, "executedBy": get_executor(), "assignedTo": get_executor()})
+            test_cases_list_of_dicts.append({**{"testCaseKey": test_case_key, "environment": environment}, **assighed_data})
 
         request_url = self.adaptavist_api_url + "/testrun"
 
