@@ -433,6 +433,7 @@ class Adaptavist():
         issue_links = kwargs.pop("issue_links", None) or []
         build_urls = kwargs.pop("build_urls", [])
         code_bases = kwargs.pop("code_bases", [])
+        status = kwargs.pop("status", None)
 
         assert not kwargs, "Unknown arguments: %r" % kwargs
 
@@ -486,6 +487,9 @@ class Adaptavist():
         code_bases = update_multiline_field(current_values, code_bases)
         if code_bases != current_values:
             request_data.setdefault("customFields", {})["code_base_url"] = code_bases
+
+        if status and status != response.get("status", None):
+            request_data['status'] = status
 
         if not request_data:
             return True
