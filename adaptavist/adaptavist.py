@@ -865,6 +865,7 @@ class Adaptavist():
         labels = kwargs.pop("labels", None) or []
         issue_links = kwargs.pop("issue_links", None) or []
         test_runs = kwargs.pop("test_runs", None) or []
+        status = kwargs.pop("status", None)
 
         assert not kwargs, "Unknown arguments: %r" % kwargs
 
@@ -910,6 +911,9 @@ class Adaptavist():
         issue_links = update_list(current_values or [], issue_links)
         if issue_links != current_values:
             request_data.update({"issueLinks": issue_links})
+
+        if status and status != response.get("status", None):
+            request_data['status'] = status
 
         if not request_data:
             return True
