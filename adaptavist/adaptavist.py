@@ -1109,13 +1109,13 @@ class Adaptavist():
             self.create_folder(project_key=project_key, folder_type="TEST_RUN", folder_name=folder)
 
         if unassigned_executor:
-            assighed_data = {}
+            assigned_data = {}
         else:
-            assighed_data = {"executedBy": get_executor(), "assignedTo": get_executor()}
+            assigned_data = {"executedBy": get_executor(), "assignedTo": get_executor()}
 
         test_cases_list_of_dicts = []
         for test_case_key in test_cases:
-            test_cases_list_of_dicts.append({**{"testCaseKey": test_case_key, "environment": environment}, **assighed_data})
+            test_cases_list_of_dicts.append({**{"testCaseKey": test_case_key, "environment": environment}, **assigned_data})
 
         request_url = self.adaptavist_api_url + "/testrun"
 
