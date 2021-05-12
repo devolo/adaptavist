@@ -11,7 +11,8 @@ from typing import Any, BinaryIO, Dict, List, Optional, Union
 import requests
 import requests_toolbelt
 
-from ._helper import build_folder_names, get_executor, update_list, update_multiline_field
+from ._helper import build_folder_names, get_executor, update_field, update_multiline_field
+from .const import KEEP_ORIGINAL_VALUE, TEST_CASE, TEST_PLAN, TEST_RUN
 
 
 class Adaptavist():
@@ -110,7 +111,6 @@ class Adaptavist():
         :param folder_type: Type of the folder to be created ("TEST_CASE", "TEST_PLAN" or "TEST_RUN")
         :returns: List of folders
         """
-        # TODO: Use constants for folder_type
         project_id = next((project["id"] for project in self.get_projects() if project["key"] == project_key), None)
 
         if not project_id:
@@ -133,7 +133,6 @@ class Adaptavist():
         :param folder_name: Name of the folder to be created
         :return: ID of the folder created
         """
-        # TODO: Use constants for folder_type
         request_url = f"{self._adaptavist_api_url}/folder"
         request_data = {"projectKey": project_key,
                         "name": folder_name,
@@ -210,8 +209,8 @@ class Adaptavist():
 
         folder = ("/" + folder).replace("//", "/") if folder else ""
         # TODO: Use constants for folder_type
-        if folder and folder not in self.get_folders(project_key=project_key, folder_type="TEST_CASE"):
-            self.create_folder(project_key=project_key, folder_type="TEST_CASE", folder_name=folder)
+        if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_CASE):
+            self.create_folder(project_key=project_key, folder_type=TEST_CASE, folder_name=folder)
 
         request_url = f"{self._adaptavist_api_url}/testcase"
         # TODO: Use constants for step_type
@@ -239,7 +238,7 @@ class Adaptavist():
         Edit given test case.
 
         :param test_case_key: Test case key to be edited. ex. "JQA-T1234"
-        :key folder: Folder to move the test case into - if not given, folder is not changed - if set to None, folder will be (re-)moved to root
+        :key folder: Folder to move the test case into - if not given, folder is not changed - if empty, folder will be (re-)moved to root
         :key name: Name of the test case
         :key objective: Objective of the test case, i.e. the overall description of its purpose
         :key precondition: Precondition(s) to be given in order to be able to execute this test case
@@ -251,13 +250,12 @@ class Adaptavist():
         :key code_bases: List of code base urls to be added (add a "-" as first list entry to remove urls or to create a new list)
         :returns: True if succeeded, False if not
         """
-        keep_original_value = r"\{keep_original_value\}"
-        folder = kwargs.pop("folder", keep_original_value)  # differ between folder not passed and folder set to None (to move to root)
+        folder: str = kwargs.pop("folder", KEEP_ORIGINAL_VALUE)
         name: str = kwargs.pop("name", "")
         objective: str = kwargs.pop("objective", "")
         precondition: str = kwargs.pop("precondition", "")
         priority: str = kwargs.pop("priority", "")
-        estimated_time: Optional[int] = kwargs.pop("estimated_time")
+        estimated_time: int = kwargs.pop("estimated_time", 0) * 1000  # We actually need it in milliseconds
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         build_urls: List[str] = kwargs.pop("build_urls", [])
@@ -277,38 +275,22 @@ class Adaptavist():
                         "objective": objective or response.get("objective"),
                         "precondition": precondition or response.get("precondition"),
                         "priority": priority or response.get("priority"),
-                        "estimatedTime": estimated_time * 1000 if estimated_time is not None else response.get("estimatedTime")}
+                        "estimatedTime": estimated_time or response.get("estimatedTime")}
 
-        self._logger.debug("edit_test_case(\"%s\")", test_case_key)
-        folder = response.get("folder") if folder == keep_original_value else (("/" + folder).replace("//", "/") if folder else None)
-        if folder != response.get("folder"):
-            # TODO: Use constants for folder_type
-            if folder and folder not in self.get_folders(project_key=response["projectKey"], folder_type="TEST_CASE"):
-                self.create_folder(project_key=response["projectKey"], folder_type="TEST_CASE", folder_name=folder)
+        if folder not in [KEEP_ORIGINAL_VALUE, ""]:
+            folder = ("/" + folder).replace("//", "/")
+        if folder not in [KEEP_ORIGINAL_VALUE, *self.get_folders(project_key=response["projectKey"], folder_type=TEST_CASE)]:
+            self.create_folder(project_key=response["projectKey"], folder_type=TEST_CASE, folder_name=folder)
+        if folder not in [KEEP_ORIGINAL_VALUE, response["folder"]]:
             request_data["folder"] = folder
 
-        # append labels to the current list of labels or create new one
-        current_values = response.get("labels", [])
-        labels = update_list(current_values, labels)
-        if labels != current_values:
-            request_data["labels"] = labels
-
-        # append issue links to the current list of issue links or create new ones
-        current_values = response.get("issueLinks", [])
-        issue_links = update_list(current_values, issue_links)
-        if issue_links != current_values:
-            request_data["issueLinks"] = issue_links
+        # append labels and issue links to the current list or create new ones
+        update_field(response.get("labels", []), request_data, "labels", labels)
+        update_field(response.get("issueLinks", []), request_data, "issueLinks", issue_links)
 
         # handle custom fields
-        current_values = response.get("customFields", {}).get("ci_server_url", "")
-        build_urls = update_multiline_field(current_values, build_urls)
-        if build_urls != current_values:
-            request_data.setdefault("customFields", {})["ci_server_url"] = build_urls
-
-        current_values = response.get("customFields", {}).get("code_base_url", "")
-        code_bases = update_multiline_field(current_values, code_bases)
-        if code_bases != current_values:
-            request_data.setdefault("customFields", {})["code_base_url"] = code_bases
+        update_multiline_field(response.get("customFields", {}).get("ci_server_url", ""), request_data, "ci_server_url", build_urls)
+        update_multiline_field(response.get("customFields", {}).get("code_base_url", ""), request_data, "code_base_url", code_bases)
 
         self._logger.debug("Updating data of test case '%s'", test_case_key)
         return bool(self._put(request_url, request_data))
@@ -471,8 +453,8 @@ class Adaptavist():
 
         folder = ("/" + folder).replace("//", "/") if folder else ""
         # TODO: Use constants for folder_type
-        if folder and folder not in self.get_folders(project_key=project_key, folder_type="TEST_PLAN"):
-            self.create_folder(project_key=project_key, folder_type="TEST_PLAN", folder_name=folder)
+        if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_PLAN):
+            self.create_folder(project_key=project_key, folder_type=TEST_PLAN, folder_name=folder)
 
         request_url = f"{self._adaptavist_api_url}/testplan"
         request_data = {"projectKey": project_key,
@@ -505,8 +487,7 @@ class Adaptavist():
         :key test_runs: List of test run keys to be linked/added to the test plan ex. ["TEST-R2","TEST-R7"] (add a "-" as first list entry to remove links or to create a new list)
         :returns: True if succeeded, False if not
         """
-        keep_original_value = r"\{keep_original_value\}"
-        folder: str = kwargs.pop("folder", keep_original_value)  # differ between folder not passed and folder set to None (to move to root)
+        folder: str = kwargs.pop("folder", KEEP_ORIGINAL_VALUE)
         name: str = kwargs.pop("name", "")
         objective: str = kwargs.pop("objective", "")
         labels: List[str] = kwargs.pop("labels", [])
@@ -527,30 +508,18 @@ class Adaptavist():
         request_data = {"name": name or response.get("name"),
                         "objective": objective or response.get("objective")}
 
-        folder = response["folder"] if folder == keep_original_value else (("/" + folder).replace("//", "/") if folder else None)
-        if folder != response["folder"]:
+        if folder not in [KEEP_ORIGINAL_VALUE, ""]:
+            folder = ("/" + folder).replace("//", "/")
+        if folder not in [KEEP_ORIGINAL_VALUE, response["folder"]]:
             # TODO: Use constants for folder_type
-            if folder and folder not in self.get_folders(project_key=response.get("projectKey"), folder_type="TEST_PLAN"):
-                self.create_folder(project_key=response.get("projectKey"), folder_type="TEST_PLAN", folder_name=folder)
-            request_data.update({"folder": folder})
+            if folder not in self.get_folders(project_key=response["projectKey"], folder_type=TEST_PLAN):
+                self.create_folder(project_key=response["projectKey"], folder_type=TEST_PLAN, folder_name=folder)
+            request_data["folder"] = folder
 
-        # append labels to the current list of labels or create new one
-        current_values = response.get("labels", [])
-        labels = update_list(current_values, labels)
-        if labels != current_values:
-            request_data.update({"labels": labels})
-
-        # append test runs to the current list of test runs or create new ones
-        current_values = [test_run["key"] for test_run in response.get("testRuns", [])]
-        test_runs = update_list(current_values, test_runs)
-        if test_runs != current_values:
-            request_data.update({"testRuns": test_runs})
-
-        # append issue links to the current list of issue links or create new ones
-        current_values = response.get("issueLinks", [])
-        issue_links = update_list(current_values, issue_links)
-        if issue_links != current_values:
-            request_data.update({"issueLinks": issue_links})
+        # append labels, test runs and issue links to the current list or create new ones
+        update_field(response.get("labels", []), request_data, "labels", labels)
+        update_field([test_run["key"] for test_run in response.get("testRuns", [])], request_data, "testRuns", test_runs)
+        update_field(response.get("issueLinks", []), request_data, "issueLinks", issue_links)
 
         self._logger.debug("Updating test plan %s", test_plan_key)
         # according to doc only fields given in the request body are updated.
@@ -659,9 +628,8 @@ class Adaptavist():
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
         folder = ("/" + folder).replace("//", "/") if folder else ""
-        # TODO: Use constants for folder_type
-        if folder and folder not in self.get_folders(project_key=project_key, folder_type="TEST_RUN"):
-            self.create_folder(project_key=project_key, folder_type="TEST_RUN", folder_name=folder)
+        if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_RUN):
+            self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
         assigned_data = {} if unassigned_executor else {"executedBy": get_executor(), "assignedTo": get_executor()}
         test_cases_list_of_dicts = [

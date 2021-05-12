@@ -26,16 +26,22 @@ def build_folder_names(result: Dict[str, Any], folder_name: str = "") -> List[An
     return folders
 
 
-def update_list(content: List[Any], new_values: List[Any]) -> List[Any]:
-    """Update a list with additional or new values."""
-    if new_values[0] == "-":
-        return new_values[1:]
-    return content + list(set(new_values) - set(content))
+def update_field(current_values: List[Any], request_data: Dict[str, Any], key: str, new_values: List[Any]) -> None:
+    """Append list entries to an existing list and add it to a dictionary, if the new list is different."""
+    if new_values[0] == "-" and current_values != new_values[1:]:
+        request_data.update({key: new_values[1:]})
+        return
+
+    combined_values = current_values + list(set(new_values) - set(current_values))
+    if current_values != combined_values:
+        request_data.update({key: combined_values})
 
 
-def update_multiline_field(content: str, new_values: List[str] = []) -> str:
+def update_multiline_field(current_content: str, request_data: Dict[str, Any], key: str, new_values: List[str]) -> None:
     """Update a multine custom field (html) with additional or new values."""
-    new_content = content[:] if new_values[0] == "-" else ""
+    new_content = "" if new_values[0] == "-" else current_content
     if new_values[0] == "-":
         new_values = new_values[1:]
-    return "<br>".join(value for value in new_values if value not in new_content)
+    combined_values = "<br>".join(value for value in new_values if value not in new_content)
+    if current_content != combined_values:
+        request_data.setdefault("customFields", {})[key] = combined_values

@@ -2,8 +2,6 @@
 """The root of Adaptavist package namespace."""
 from __future__ import unicode_literals
 
-from pkg_resources import DistributionNotFound, get_distribution
-
 from .adaptavist import Adaptavist
 
 try:
