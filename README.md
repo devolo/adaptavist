@@ -5,20 +5,18 @@ This python package provides functionality for Jira Test Management ([tm4j](http
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Examples and Features](#examples-and-features)
-    - [General Workflow](#general-workflow)
+- [General Workflow](#general-workflow)
 
 ## Installation
 
 To install adaptavist, you can use (one of) the following command(s):
-```
-$ pip install git+https://github.com/devolo/adaptavist
-$ pip install git+https://github.com/devolo/adaptavist.git@v1.0.0
-$ pip install https://github.com/devolo/adaptavist/archive/v1.0.0/adaptavist.zip
+```bash
+$ python -m pip install adaptavist
 ```
 
 To uninstall adaptavist, you can use the following command:
-```
-$ pip uninstall adaptavist
+```bash
+$ python -m pip uninstall adaptavist
 ```
 
 ## Getting Started
