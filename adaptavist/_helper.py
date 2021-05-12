@@ -28,10 +28,9 @@ def build_folder_names(result: Dict[str, Any], folder_name: str = "") -> List[An
 
 def update_list(content: List[Any], new_values: List[Any]) -> List[Any]:
     """Update a list with additional or new values."""
-    new_content = [] if new_values[0] == "-" else content[:]
     if new_values[0] == "-":
-        new_values = new_values[1:]
-    return new_content + list(set(new_values) - set(new_content))
+        return new_values[1:]
+    return content + list(set(new_values) - set(content))
 
 
 def update_multiline_field(content: str, new_values: List[str] = []) -> str:
@@ -39,7 +38,4 @@ def update_multiline_field(content: str, new_values: List[str] = []) -> str:
     new_content = content[:] if new_values[0] == "-" else ""
     if new_values[0] == "-":
         new_values = new_values[1:]
-    for value in new_values:
-        if value not in new_content:
-            new_content = value if not new_content else new_content + "<br>" + value
-    return new_content
+    return "<br>".join(value for value in new_values if value not in new_content)
