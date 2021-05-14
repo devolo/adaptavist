@@ -1,7 +1,9 @@
 # adaptavist
+
 This python package provides functionality for Jira Test Management ([tm4j](https://www.adaptavist.com/doco/display/KT/Managing+Tests+From+the+REST+API)).
 
-# Table of Contents
+## Table of Contents
+
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Examples and Features](#examples-and-features)
@@ -10,13 +12,15 @@ This python package provides functionality for Jira Test Management ([tm4j](http
 ## Installation
 
 To install adaptavist, you can use (one of) the following command(s):
+
 ```bash
-$ python -m pip install adaptavist
+python -m pip install adaptavist
 ```
 
 To uninstall adaptavist, you can use the following command:
+
 ```bash
-$ python -m pip uninstall adaptavist
+python -m pip uninstall adaptavist
 ```
 
 ## Getting Started
@@ -48,4 +52,5 @@ In order to access Adaptavist/Jira, valid credentials are necessary. In addition
     atm.edit_test_result_status(test_run_key=test_run_key, test_case_key="TEST-T1", status="Pass")
 
    ```
+
 There's much more inside (like adding attachments, creating folders and environments, cloning test cycles). Additional code examples will follow.

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """This module provides functionality for Adaptavist Test Management with Jira server interaction."""
 
 import json
@@ -115,7 +113,7 @@ class Adaptavist():
         project_id = next((project["id"] for project in self.get_projects() if project["key"] == project_key), None)
 
         if not project_id:
-            self._logger.error(f"Project {project_key} not found.")
+            self._logger.error("Project %s not found.", project_key)
             return []
 
         request_url = f"{self.jira_server}/rest/tests/1.0/project/{quote_plus(project_id)}/foldertree/{folder_type.replace('_', '').lower()}?startAt=0&maxResults=200"
@@ -211,7 +209,6 @@ class Adaptavist():
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
         folder = ("/" + folder).replace("//", "/") if folder else ""
-        # TODO: Use constants for folder_type
         if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_CASE):
             self.create_folder(project_key=project_key, folder_type=TEST_CASE, folder_name=folder)
 
@@ -455,7 +452,7 @@ class Adaptavist():
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        folder = ("/" + folder).replace("//", "/") if folder else ""       
+        folder = ("/" + folder).replace("//", "/") if folder else ""
         if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_PLAN):
             self.create_folder(project_key=project_key, folder_type=TEST_PLAN, folder_name=folder)
 

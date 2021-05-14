@@ -1,3 +1,5 @@
+"""Test the Adaptavist module."""
+
 from adaptavist import Adaptavist
 
 from . import load_fixture

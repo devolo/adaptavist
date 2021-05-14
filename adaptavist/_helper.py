@@ -1,3 +1,5 @@
+"""Helper methods used by the module."""
+
 import getpass
 import os
 from typing import Any, Dict, List
@@ -11,7 +13,7 @@ def get_executor() -> str:
     return "jenkins" if is_jenkins else getpass.getuser().lower()
 
 
-def build_folder_names(result: Dict[str, Any], folder_name: str) -> List[Any]:
+def build_folder_names(result: Dict[str, Any], folder_name: str = "") -> List[Any]:
     """Build list of folder names from a hierarchical dictionary."""
     folders = []
     folder_name = "/".join((folder_name or "", result.get("name", ""))).replace("//", "/")

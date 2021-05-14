@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """The root of Adaptavist package namespace."""
+
 from __future__ import unicode_literals
 
 from .adaptavist import Adaptavist
