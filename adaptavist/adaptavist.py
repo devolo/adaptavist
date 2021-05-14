@@ -45,9 +45,9 @@ class Adaptavist():
             request_url = f"{self.jira_server}/rest/api/2/user/search?username=.&startAt={i}&maxResults=200"
             self._logger.debug("Asking for 200 users starting at %i", i + 1)
             request = self._get(request_url)
-            if not request:
+            result = [] if not request else request.json()
+            if not result:
                 break
-            result = request.json()
             users = [*users, *result]
             i += len(result)
         return [user["key"] for user in users]
@@ -118,7 +118,7 @@ class Adaptavist():
             self._logger.error(f"Project {project_key} not found.")
             return []
 
-        request_url = f"{self.jira_server}/rest/tests/1.0/project/{quote_plus(project_id)}/foldertree/{folder_type.replace('_', '')}?startAt=0&maxResults=200"
+        request_url = f"{self.jira_server}/rest/tests/1.0/project/{quote_plus(project_id)}/foldertree/{folder_type.replace('_', '').lower()}?startAt=0&maxResults=200"
         self._logger.debug("Getting folders in project '%s'", project_key)
         request = self._get(request_url)
         response = [] if not request else request.json()
@@ -455,8 +455,7 @@ class Adaptavist():
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        folder = ("/" + folder).replace("//", "/") if folder else ""
-        # TODO: Use constants for folder_type
+        folder = ("/" + folder).replace("//", "/") if folder else ""       
         if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_PLAN):
             self.create_folder(project_key=project_key, folder_type=TEST_PLAN, folder_name=folder)
 
