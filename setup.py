@@ -14,6 +14,9 @@ setup(
     platforms="any",
     python_requires=">=3.6",
     install_requires=["importlib-metadata;python_version<'3.8'", "pbr", "requests_toolbelt", "requests"],
+    extras_require={
+        "test": ["pytest", "requests-mock"],
+    },
     setup_requires=["setuptools_scm"],
     keywords="python adaptavist kanoah tm4j jira test testmanagement report",
     classifiers=[
