@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """This module provides functionality for Adaptavist Test Management with Jira server interaction."""
 
 import json
 import logging
-import urllib.parse
 from typing import Any, BinaryIO, Dict, List, Optional, Union
+from urllib.parse import quote_plus
 
 import requests
 import requests_toolbelt
@@ -46,9 +45,9 @@ class Adaptavist():
             request_url = f"{self.jira_server}/rest/api/2/user/search?username=.&startAt={i}&maxResults=200"
             self._logger.debug("Asking for 200 users starting at %i", i + 1)
             request = self._get(request_url)
-            result = [] if not request else request.json()
-            if not result:
+            if not request:
                 break
+            result = request.json()
             users = [*users, *result]
             i += len(result)
         return [user["key"] for user in users]
@@ -73,7 +72,7 @@ class Adaptavist():
         :param project_key: Project key to search for environments
         :returns: List of environments
         """
-        request_url = f"{self._adaptavist_api_url}/environments?projectKey={urllib.parse.quote_plus(project_key)}"
+        request_url = f"{self._adaptavist_api_url}/environments?projectKey={quote_plus(project_key)}"
         self._logger.debug("Asking enviroments in project '%s'.", project_key)
         request = self._get(request_url)
         return [] if not request else request.json()
@@ -93,9 +92,11 @@ class Adaptavist():
 
         request_url = f"{self._adaptavist_api_url}/environments"
         self._logger.debug("Creating environment '%s' in project '%s'", environment_name, project_key)
-        request_data = {"projectKey": project_key,
-                        "name": environment_name,
-                        "description": description}
+        request_data = {
+            "projectKey": project_key,
+            "name": environment_name,
+            "description": description,
+        }
 
         request = self._post(request_url, request_data)
         if request:
@@ -117,7 +118,7 @@ class Adaptavist():
             self._logger.error(f"Project {project_key} not found.")
             return []
 
-        request_url = f"{self.jira_server}/rest/tests/1.0/project/{urllib.parse.quote_plus(project_id)}/foldertree/{folder_type.replace('_', '')}?startAt=0&maxResults=200"
+        request_url = f"{self.jira_server}/rest/tests/1.0/project/{quote_plus(project_id)}/foldertree/{folder_type.replace('_', '')}?startAt=0&maxResults=200"
         self._logger.debug("Getting folders in project '%s'", project_key)
         request = self._get(request_url)
         response = [] if not request else request.json()
@@ -134,9 +135,11 @@ class Adaptavist():
         :return: ID of the folder created
         """
         request_url = f"{self._adaptavist_api_url}/folder"
-        request_data = {"projectKey": project_key,
-                        "name": folder_name,
-                        "type": folder_type}
+        request_data = {
+            "projectKey": project_key,
+            "name": folder_name,
+            "type": folder_type,
+        }
         self._logger.debug("Creating folder '%s' (%s) in project '%s'", folder_name, folder_type, project_key)
         request = self._post(request_url, request_data)
         if not request:
@@ -169,7 +172,7 @@ class Adaptavist():
         test_cases: List = []
         i = 0
         while True:
-            request_url = f"{self._adaptavist_api_url}/testcase/search?query={urllib.parse.quote_plus(search_mask)}&startAt={i}"
+            request_url = f"{self._adaptavist_api_url}/testcase/search?query={quote_plus(search_mask)}&startAt={i}"
             self._logger.debug("Asking for test cases with search mask '%s' starting at %i", search_mask, i + 1)
             request = self._get(request_url)
             if not request:
@@ -200,7 +203,7 @@ class Adaptavist():
         objective: str = kwargs.pop("objective", "")
         precondition: str = kwargs.pop("precondition", "")
         priority: str = kwargs.pop("priority", "")
-        estimated_time: Optional[int] = kwargs.pop("estimated_time")
+        estimated_time: int = kwargs.pop("estimated_time", 0) * 1000  # We actually need it in milliseconds
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         steps: List[Dict[str, Any]] = kwargs.pop("steps", [])
@@ -214,18 +217,21 @@ class Adaptavist():
 
         request_url = f"{self._adaptavist_api_url}/testcase"
         # TODO: Use constants for step_type
-        request_data = {"projectKey": project_key,
-                        "name": test_case_name,
-                        "folder": folder,
-                        "status": "Approved",
-                        "objective": objective,
-                        "precondition": precondition,
-                        "priority": priority,
-                        "estimatedTime": estimated_time * 1000 if estimated_time is not None else None,
-                        "labels": labels,
-                        "issueLinks": issue_links,
-                        "testScript": {"type": "STEP_BY_STEP", "steps": json.dumps(steps)}
-                        }
+        request_data = {
+            "projectKey": project_key,
+            "name": test_case_name,
+            "folder": folder,
+            "status": "Approved",
+            "objective": objective,
+            "precondition": precondition,
+            "priority": priority,
+            "estimatedTime": estimated_time or None,
+            "labels": labels,
+            "issueLinks": issue_links,
+            "testScript": {
+                "type": "STEP_BY_STEP", "steps": json.dumps(steps)
+            },
+        }
         self._logger.debug("Creating test case %s", project_key)
         request = self._post(request_url, request_data)
         if not request:
@@ -271,11 +277,13 @@ class Adaptavist():
 
         response = request.json()
 
-        request_data = {"name": name or response.get("name"),
-                        "objective": objective or response.get("objective"),
-                        "precondition": precondition or response.get("precondition"),
-                        "priority": priority or response.get("priority"),
-                        "estimatedTime": estimated_time or response.get("estimatedTime")}
+        request_data = {
+            "name": name or response.get("name"),
+            "objective": objective or response.get("objective"),
+            "precondition": precondition or response.get("precondition"),
+            "priority": priority or response.get("priority"),
+            "estimatedTime": estimated_time or response.get("estimatedTime")
+        }
 
         if folder not in [KEEP_ORIGINAL_VALUE, ""]:
             folder = ("/" + folder).replace("//", "/")
@@ -330,9 +338,7 @@ class Adaptavist():
             request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
             try:
                 self._logger.debug("Getting test case %s", test_case_key)
-                request = requests.get(request_url,
-                                       auth=self._authentication,
-                                       headers=self._headers)
+                request = requests.get(request_url, auth=self._authentication, headers=self._headers)
                 if request.status_code == 404:
                     self._logger.warning("Test case %s was not found", test_case_key)
                     continue
@@ -368,9 +374,7 @@ class Adaptavist():
             request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
             self._logger.debug("Getting test case %s", test_case_key)
             try:
-                request = requests.get(request_url,
-                                       auth=self._authentication,
-                                       headers=self._headers)
+                request = requests.get(request_url, auth=self._authentication, headers=self._headers)
                 if request.status_code == 404:
                     self._logger.warning("Test case %s was not found", test_case_key)
                     continue
@@ -419,7 +423,7 @@ class Adaptavist():
         test_plans: List = []
         i = 0
         while True:
-            request_url = f"{self._adaptavist_api_url}/testplan/search?query={urllib.parse.quote_plus(search_mask)}&startAt={i}"
+            request_url = f"{self._adaptavist_api_url}/testplan/search?query={quote_plus(search_mask)}&startAt={i}"
             self._logger.debug("Asking for test plans with search mask '%s' starting at %i", search_mask, i + 1)
             request = self._get(request_url)
             result = [] if not request else request.json()
@@ -457,15 +461,16 @@ class Adaptavist():
             self.create_folder(project_key=project_key, folder_type=TEST_PLAN, folder_name=folder)
 
         request_url = f"{self._adaptavist_api_url}/testplan"
-        request_data = {"projectKey": project_key,
-                        "name": test_plan_name,
-                        "folder": folder,
-                        "status": "Approved",
-                        "objective": objective,
-                        "labels": labels,
-                        "issueLinks": issue_links,
-                        "testRunKeys": test_runs,
-                        }
+        request_data = {
+            "projectKey": project_key,
+            "name": test_plan_name,
+            "folder": folder,
+            "status": "Approved",
+            "objective": objective,
+            "labels": labels,
+            "issueLinks": issue_links,
+            "testRunKeys": test_runs,
+        }
 
         self._logger.debug("Creating test plan %s in project %s", test_plan_name, project_key)
         request = self._post(request_url, request_data)
@@ -505,13 +510,11 @@ class Adaptavist():
 
         response = request.json()
 
-        request_data = {"name": name or response.get("name"),
-                        "objective": objective or response.get("objective")}
+        request_data = {"name": name or response.get("name"), "objective": objective or response.get("objective")}
 
         if folder not in [KEEP_ORIGINAL_VALUE, ""]:
             folder = ("/" + folder).replace("//", "/")
         if folder not in [KEEP_ORIGINAL_VALUE, response["folder"]]:
-            # TODO: Use constants for folder_type
             if folder not in self.get_folders(project_key=response["projectKey"], folder_type=TEST_PLAN):
                 self.create_folder(project_key=response["projectKey"], folder_type=TEST_PLAN, folder_name=folder)
             request_data["folder"] = folder
@@ -549,7 +552,7 @@ class Adaptavist():
         test_runs: List = []
         i = 0
         while True:
-            search_mask = urllib.parse.quote_plus(f"testRun.name = \"{test_run_name}\"")
+            search_mask = quote_plus(f"testRun.name = \"{test_run_name}\"")
             request_url = f"{self.jira_server}/rest/tests/1.0/testrun/search?startAt={i}&maxResults=10000&query={search_mask}&fields=id,key,name"
             self._logger.debug("Asking for 10000 test runs starting at %i", i + 1)
             request = self._get(request_url)
@@ -583,7 +586,7 @@ class Adaptavist():
         test_runs: List = []
         i = 0
         while True:
-            request_url = f"{self._adaptavist_api_url}/testrun/search?query={urllib.parse.quote_plus(search_mask)}&startAt={i}&maxResults=1000&fields={urllib.parse.quote_plus(fields)}"
+            request_url = f"{self._adaptavist_api_url}/testrun/search?query={quote_plus(search_mask)}&startAt={i}&maxResults=1000&fields={quote_plus(fields)}"
             self._logger.debug("Asking for 1000 test runs starting at %i using search mask %s", i + 1, search_mask)
             request = self._get(request_url)
             result = [] if not request else request.json()
@@ -632,21 +635,21 @@ class Adaptavist():
             self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
         assigned_data = {} if unassigned_executor else {"executedBy": get_executor(), "assignedTo": get_executor()}
-        test_cases_list_of_dicts = [
-            {
-                **{"testCaseKey": test_case_key, "environment": environment},
-                **assigned_data,
-            }
-            for test_case_key in test_cases
-        ]
+        test_cases_list_of_dicts = [{
+            "testCaseKey": test_case_key,
+            "environment": environment,
+            **assigned_data,
+        } for test_case_key in test_cases]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
-        request_data = {"projectKey": project_key,
-                        "testPlanKey": test_plan_key,
-                        "name": test_run_name,
-                        "folder": folder,
-                        "issueKey": issue_key,
-                        "items": test_cases_list_of_dicts}
+        request_data = {
+            "projectKey": project_key,
+            "testPlanKey": test_plan_key,
+            "name": test_run_name,
+            "folder": folder,
+            "issueKey": issue_key,
+            "items": test_cases_list_of_dicts,
+        }
         self._logger.debug("Creating new test run in project %s with name '%s'", test_plan_key, test_run_name)
         request = self._post(request_url, request_data)
         if request:
@@ -678,13 +681,14 @@ class Adaptavist():
 
         test_run_items = test_run.get("items", [])
 
-        key = self.create_test_run(project_key=project_key or test_run["projectKey"],
-                                   test_run_name=test_run_name or f"{test_run['name']} (cloned from {test_run['key']})",
-                                   folder=folder or test_run.get("folder"),
-                                   issue_key=test_run.get("issue_key"),
-                                   test_plan_key=test_plan_key,  # will be handled further below
-                                   environment=environment or (test_run_items[0].get("environment") if test_run_items else None),
-                                   test_cases=[item["testCaseKey"] for item in test_run_items])
+        key = self.create_test_run(
+            project_key=project_key or test_run["projectKey"],
+            test_run_name=test_run_name or f"{test_run['name']} (cloned from {test_run['key']})",
+            folder=folder or test_run.get("folder"),
+            issue_key=test_run.get("issue_key"),
+            test_plan_key=test_plan_key,  # will be handled further below
+            environment=environment or (test_run_items[0].get("environment") if test_run_items else None),
+            test_cases=[item["testCaseKey"] for item in test_run_items])
 
         # get test plans that contain the original test run and add cloned test run to them
         if not test_plan_key:
@@ -719,24 +723,20 @@ class Adaptavist():
             test_results = [*test_results, *results]
             i += len(results)
 
-        results = [
-            {
-                "key": result["key"],
-                "testCase": result.get("testCase", {}),
-                "testRun": result.get("testRun", {}),
-                "estimatedTime": result.get("estimatedTime"),
-                "executedBy": result["user"].get("key"),
-                "executionDate": result.get("executionDate"),
-                "executionTime": result.get("executionTime"),
-                "environment": result.get("environment", {}).get("name"),
-                "assignedTo": result.get("assignedTo"),
-                "automated": result.get("automated", False),
-                "status": result["status"]["name"],
-                "issueLinks": result.get("issues", []),
-            }
-            for result in test_results
-            if result.get("lastTestResult", True) or not last_result_only
-        ]
+        results = [{
+            "key": result["key"],
+            "testCase": result.get("testCase", {}),
+            "testRun": result.get("testRun", {}),
+            "estimatedTime": result.get("estimatedTime"),
+            "executedBy": result["user"].get("key"),
+            "executionDate": result.get("executionDate"),
+            "executionTime": result.get("executionTime"),
+            "environment": result.get("environment", {}).get("name"),
+            "assignedTo": result.get("assignedTo"),
+            "automated": result.get("automated", False),
+            "status": result["status"]["name"],
+            "issueLinks": result.get("issues", []),
+        } for result in test_results if result.get("lastTestResult", True) or not last_result_only]
 
         return results
 
@@ -825,7 +825,7 @@ class Adaptavist():
         :return: ID of the test result that was created
         """
         comment: str = kwargs.pop("comment", "")
-        execute_time: Optional[int] = kwargs.pop("execute_time")
+        execute_time: Optional[int] = kwargs.pop("execute_time", None)
         environment: str = kwargs.pop("environment", "")
         issue_links: List[str] = kwargs.pop("issue_links", [])
         if kwargs:
@@ -868,7 +868,7 @@ class Adaptavist():
         :return: ID of the test result that was created
         """
         comment: str = kwargs.pop("comment", "")
-        execute_time: Optional[int] = kwargs.pop("execute_time")
+        execute_time: Optional[int] = kwargs.pop("execute_time", None)
         environment: str = kwargs.pop("environment", "")
         issue_links: List[str] = kwargs.pop("issue_links", [])
         if kwargs:
@@ -934,10 +934,7 @@ class Adaptavist():
 
         try:
             self._logger.debug("Attaching %s to %s", filename, test_result_id)
-            request = requests.post(request_url,
-                                    auth=self._authentication,
-                                    headers=headers,
-                                    data=stream)
+            request = requests.post(request_url, auth=self._authentication, headers=headers, data=stream)
             request.raise_for_status()
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
             self._logger.error("request failed. %s", ex)
@@ -1036,10 +1033,7 @@ class Adaptavist():
         headers["X-Atlassian-Token"] = "nocheck"
 
         try:
-            request = requests.post(request_url,
-                                    auth=self._authentication,
-                                    headers=headers,
-                                    data=stream)
+            request = requests.post(request_url, auth=self._authentication, headers=headers, data=stream)
             request.raise_for_status()
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
             self._logger.error("request failed. %s", ex)
@@ -1055,9 +1049,7 @@ class Adaptavist():
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""
         try:
-            request = requests.delete(request_url,
-                                      auth=self._authentication,
-                                      headers=self._headers)
+            request = requests.delete(request_url, auth=self._authentication, headers=self._headers)
             request.raise_for_status()
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
             self._logger.error("request failed. %s", ex)
@@ -1067,9 +1059,7 @@ class Adaptavist():
     def _get(self, request_url: str) -> Optional[requests.Response]:
         """GET data from Jira/Adaptavist."""
         try:
-            request = requests.get(request_url,
-                                   auth=self._authentication,
-                                   headers=self._headers)
+            request = requests.get(request_url, auth=self._authentication, headers=self._headers)
             request.raise_for_status()
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
             self._logger.error("request failed. %s", ex)
@@ -1079,10 +1069,7 @@ class Adaptavist():
     def _post(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """POST data to Jira/Adaptavist."""
         try:
-            request = requests.post(request_url,
-                                    auth=self._authentication,
-                                    headers=self._headers,
-                                    data=json.dumps(data))
+            request = requests.post(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data))
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             # HttpPost: in case of status 400 request.text contains error messages
@@ -1096,10 +1083,7 @@ class Adaptavist():
     def _put(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """PUT data to Jira/Adaptavist."""
         try:
-            request = requests.put(request_url,
-                                   auth=self._authentication,
-                                   headers=self._headers,
-                                   data=json.dumps(data))
+            request = requests.put(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data))
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             # HttpPut: in case of status 400 request.text contains error messages
