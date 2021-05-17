@@ -116,7 +116,9 @@ class Adaptavist():
             self._logger.error("Project %s not found.", project_key)
             return []
 
-        request_url = f"{self.jira_server}/rest/tests/1.0/project/{quote_plus(project_id)}/foldertree/{folder_type.replace('_', '').lower()}?startAt=0&maxResults=200"
+        quoted_project_id = quote_plus(project_id)
+        quoted_folder_type = folder_type.replace('_', '').lower()
+        request_url = f"{self.jira_server}/rest/tests/1.0/project/{quoted_project_id}/foldertree/{quoted_folder_type}?startAt=0&maxResults=200"
         self._logger.debug("Getting folders in project '%s'", project_key)
         request = self._get(request_url)
         response = [] if not request else request.json()
@@ -161,7 +163,7 @@ class Adaptavist():
         """
         Get a list of test cases matching the search mask.
 
-        :param search_mask: search mask to match test cases
+        :param search_mask: Search mask to match test cases
         :returns: List of test cases
         """
         # unfortunately, /testcase/search does not support empty query, so we use a basic filter here to get all test cases
@@ -304,7 +306,7 @@ class Adaptavist():
         """
         Delete given test case.
 
-        :param test_case_key: test case key to be deleted. ex. "JQA-T1234"
+        :param test_case_key: Test case key to be deleted. ex. "JQA-T1234"
         :returns: True if succeeded, False if not
         """
         request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
@@ -315,7 +317,7 @@ class Adaptavist():
         """
         Get the list of test cases linked to an issue.
 
-        :param issue_key: issue key to look for
+        :param issue_key: Issue key to look for
         :returns: List of linked test cases
         """
         request_url = f"{self._adaptavist_api_url}/issuelink/{issue_key}/testcases"
@@ -327,22 +329,16 @@ class Adaptavist():
         """
         Link a list of existing testcases to an issue.
 
-        :param issue_key: issue to link the test cases to
-        :param test_case_keys: list of test case keys to be linked to the issue
+        :param issue_key: Issue to link the test cases to
+        :param test_case_keys: List of test case keys to be linked to the issue
         :returns: True if succeeded, False if not
         """
         for test_case_key in test_case_keys:
             request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
-            try:
-                self._logger.debug("Getting test case %s", test_case_key)
-                request = requests.get(request_url, auth=self._authentication, headers=self._headers)
-                if request.status_code == 404:
-                    self._logger.warning("Test case %s was not found", test_case_key)
-                    continue
-                request.raise_for_status()
-            except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
-                self._logger.error("request failed. %s", ex)
-                return False
+            request = self._get(request_url)
+            if request is None:
+                self._logger.warning("Test case %s was not found", test_case_key)
+                continue
 
             response = request.json()
 
@@ -370,15 +366,10 @@ class Adaptavist():
         for test_case_key in test_case_keys:
             request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
             self._logger.debug("Getting test case %s", test_case_key)
-            try:
-                request = requests.get(request_url, auth=self._authentication, headers=self._headers)
-                if request.status_code == 404:
-                    self._logger.warning("Test case %s was not found", test_case_key)
-                    continue
-                request.raise_for_status()
-            except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
-                self._logger.error("request failed. %s", ex)
-                return False
+            request = self._get(request_url)
+            if request is None:
+                self._logger.warning("Test case %s was not found", test_case_key)
+                continue
 
             response = request.json()
 
@@ -564,13 +555,13 @@ class Adaptavist():
         Get a list of test runs matching the search mask.
 
         :param search_mask: Search mask to match test runs
-        :key fields: comma-separated list of fields to be included (e.g. key, name, items)
+        :key fields: Comma-separated list of fields to be included (e.g. key, name, items)
 
         .. note:: If fields is not set, all fields will be returned. This can be slow as it will also also include test result items.
 
         :returns: List of test runs
         """
-        fields = kwargs.pop("fields", "")
+        fields: str = kwargs.pop("fields", "")
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
@@ -680,10 +671,10 @@ class Adaptavist():
         key = self.create_test_run(
             project_key=project_key or test_run["projectKey"],
             test_run_name=test_run_name or f"{test_run['name']} (cloned from {test_run['key']})",
-            folder=folder or test_run.get("folder"),
-            issue_key=test_run.get("issue_key"),
+            folder=folder or test_run["folder"],
+            issue_key=test_run["issue_key"],
             test_plan_key=test_plan_key,  # will be handled further below
-            environment=environment or (test_run_items[0].get("environment") if test_run_items else None),
+            environment=environment or (test_run_items[0].get("environment", "") if test_run_items else ""),
             test_cases=[item["testCaseKey"] for item in test_run_items])
 
         # get test plans that contain the original test run and add cloned test run to them
@@ -769,13 +760,12 @@ class Adaptavist():
 
         request_data = []
         for result in results:
-            if exclude_existing_test_cases and result["testCaseKey"] in [item["testCaseKey"] for item in test_run.get("items", [])]:
+            if exclude_existing_test_cases and result["testCaseKey"] in [item["testCaseKey"] for item in test_run["items"]]:
                 continue
             data = {key: value for key, value in result.items()}
             data["executedBy"] = get_executor()
             data["assignedTo"] = data["executedBy"]
-            if environment:
-                data["environment"] = environment
+            data["environment"] = environment
             request_data.append(data)
 
         if not request_data:
@@ -787,8 +777,7 @@ class Adaptavist():
         if not request:
             return []
 
-        response = request.json()
-        return [result["id"] for result in response]
+        return [result["id"] for result in request.json()]
 
     def get_test_result(self, test_run_key: str, test_case_key: str) -> Dict[str, Any]:
         """
@@ -897,10 +886,10 @@ class Adaptavist():
         """
         Add attachment to a test result.
 
-        :param test_result_id: The test result id.
-        :param attachment: The attachment as filepath name or file-like object.
-        :param filename: The optional filename.
-        :returns: True if succeeded, False if not     
+        :param test_result_id: The test result id
+        :param attachment: The attachment as filepath name or file-like object
+        :param filename: The optional filename
+        :returns: True if succeeded, False if not
         """
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
         if isinstance(attachment, BinaryIO):
@@ -934,10 +923,9 @@ class Adaptavist():
                     script_result.pop(key)
 
             # update given step
-            if script_result.get("index") == step - 1:
+            if script_result["index"] == step - 1:
                 script_result["status"] = status
-                if comment is not None:
-                    script_result["comment"] = comment
+                script_result["comment"] = comment
 
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
 
