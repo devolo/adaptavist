@@ -16,7 +16,7 @@ def get_executor() -> str:
 def build_folder_names(result: Dict[str, Any], folder_name: str = "") -> List[Any]:
     """Build list of folder names from a hierarchical dictionary."""
     folders = []
-    folder_name = "/".join((folder_name or "", result.get("name", ""))).replace("//", "/")
+    folder_name = "/".join((folder_name, result.get("name", ""))).replace("//", "/")
     folders.append(folder_name)
 
     if not result.get("children"):

@@ -50,20 +50,19 @@ class Adaptavist():
             i += len(result)
         return [user["key"] for user in users]
 
-    def get_projects(self) -> List[Dict[str, str]]:
+    def get_projects(self) -> List[Dict[str, Any]]:
         """
         Get a list of projects known to Adatavist/Jira.
 
         :returns: List of projects
         """
-
         request_url = f"{self.jira_server}/rest/tests/1.0/project"
         self._logger.debug("Asking for product list.")
         request = self._get(request_url)
         response = [] if not request else request.json()
         return [{"id": project["id"], "key": project["key"], "name": project["name"]} for project in response]
 
-    def get_environments(self, project_key: str = "") -> List[Dict[str, str]]:
+    def get_environments(self, project_key: str) -> List[Dict[str, Any]]:
         """
         Get a list of environments matching the search mask.
 
@@ -107,22 +106,18 @@ class Adaptavist():
         Get a list of folders.
 
         :param project_key: Project key to search for folders
-        :param folder_type: Type of the folder to be created ("TEST_CASE", "TEST_PLAN" or "TEST_RUN")
+        :param folder_type: Type of the folder ("TEST_CASE", "TEST_PLAN" or "TEST_RUN")
         :returns: List of folders
         """
-        project_id = next((project["id"] for project in self.get_projects() if project["key"] == project_key), None)
-
+        project_id: Optional[int] = next((project["id"] for project in self.get_projects() if project["key"] == project_key), None)
         if not project_id:
-            self._logger.error("Project %s not found.", project_key)
+            self._logger.error("Project '%s' not found.", project_key)
             return []
 
-        quoted_project_id = quote_plus(project_id)
-        quoted_folder_type = folder_type.replace('_', '').lower()
-        request_url = f"{self.jira_server}/rest/tests/1.0/project/{quoted_project_id}/foldertree/{quoted_folder_type}?startAt=0&maxResults=200"
+        request_url = f"{self.jira_server}/rest/tests/1.0/project/{project_id}/foldertree/{folder_type.replace('_', '').lower()}?startAt=0&maxResults=200"
         self._logger.debug("Getting folders in project '%s'", project_key)
         request = self._get(request_url)
         response = [] if not request else request.json()
-
         return build_folder_names(response)
 
     def create_folder(self, project_key: str, folder_type: str, folder_name: str) -> Optional[int]:
@@ -175,9 +170,9 @@ class Adaptavist():
             request_url = f"{self._adaptavist_api_url}/testcase/search?query={quote_plus(search_mask)}&startAt={i}"
             self._logger.debug("Asking for test cases with search mask '%s' starting at %i", search_mask, i + 1)
             request = self._get(request_url)
-            if not request:
+            result = [] if not request else request.json()
+            if not result:
                 break
-            result = request.json()
             test_cases = [*test_cases, *result]
             i += len(result)
 
@@ -199,7 +194,7 @@ class Adaptavist():
         :key steps: List of steps to add. Each step as a dictionary (like {"description": <string>, "expectedResult": <string>}).
         :return: ID of the test plan created
         """
-        folder: str = kwargs.pop("folder", "")
+        folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")
         objective: str = kwargs.pop("objective", "")
         precondition: str = kwargs.pop("precondition", "")
         priority: str = kwargs.pop("priority", "")
@@ -210,8 +205,7 @@ class Adaptavist():
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        folder = ("/" + folder).replace("//", "/") if folder else ""
-        if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_CASE):
+        if folder not in self.get_folders(project_key=project_key, folder_type=TEST_CASE):
             self.create_folder(project_key=project_key, folder_type=TEST_CASE, folder_name=folder)
 
         request_url = f"{self._adaptavist_api_url}/testcase"
@@ -236,7 +230,7 @@ class Adaptavist():
         if not request:
             return None
         response = request.json()
-        return response["id"]
+        return response["key"]
 
     def edit_test_case(self, test_case_key: str, **kwargs) -> bool:
         """
@@ -852,10 +846,10 @@ class Adaptavist():
         :key issue_links: List of issue keys to link the test result to
         :return: ID of the test result that was created
         """
-        comment: str = kwargs.pop("comment", "")
+        comment: Optional[str] = kwargs.pop("comment", None)
         execute_time: Optional[int] = kwargs.pop("execute_time", None)
-        environment: str = kwargs.pop("environment", "")
-        issue_links: List[str] = kwargs.pop("issue_links", [])
+        environment: Optional[str] = kwargs.pop("environment", None)
+        issue_links: Optional[List[str]] = kwargs.pop("issue_links", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
@@ -863,16 +857,17 @@ class Adaptavist():
 
         executor = get_executor()
         request_data: Dict[str, Any] = {
-            "environment": environment,
             "executedBy": executor,
             "assignedTo": executor,
             "status": status,
         }
+        if environment is not None:
+            request_data["environment"]
         if comment is not None:
             request_data["comment"] = comment
         if execute_time is not None:
             request_data["executionTime"] = execute_time * 1000
-        if issue_links:
+        if issue_links is not None:
             request_data["issueLinks"] = issue_links
 
         self._logger.debug("Updating test result for %s in %s", test_case_key, test_run_key)
@@ -894,6 +889,9 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
         if isinstance(attachment, BinaryIO):
             return self._upload_file(request_url, attachment, filename)
+        if not filename:
+            self._logger.error("The filename '%s' is not valid.", filename)
+            raise SyntaxError("No valid filename given.")
         return self._upload_file_by_name(request_url, attachment, filename)
 
     def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs) -> Optional[int]:
@@ -918,7 +916,7 @@ class Adaptavist():
 
         for script_result in script_results:
             # keep relevant fields only (to make PUT pass)
-            for key in list(script_result.keys()):
+            for key in script_result.keys():
                 if key not in ["index", "status", "comment"]:
                     script_result.pop(key)
 
@@ -958,6 +956,9 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
         if isinstance(attachment, BinaryIO):
             return self._upload_file(request_url, attachment, filename)
+        if not filename:
+            self._logger.error("The filename '%s' is not valid.", filename)
+            raise SyntaxError("No valid filename given.")
         return self._upload_file_by_name(request_url, attachment, filename)
 
     def _delete(self, request_url: str) -> Optional[requests.Response]:
@@ -986,7 +987,6 @@ class Adaptavist():
             request = requests.post(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data))
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
-            # HttpPost: in case of status 400 request.text contains error messages
             self._logger.error("request failed. %s %s", ex, request.text)
             return None
         except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as ex:
@@ -1000,7 +1000,6 @@ class Adaptavist():
             request = requests.put(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data))
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
-            # HttpPut: in case of status 400 request.text contains error messages
             self._logger.error("request failed. %s %s", ex, request.text)
             return None
         except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as ex:
