@@ -690,7 +690,7 @@ class Adaptavist():
         if not test_plan_key:
             test_plans = self.get_test_plans()
             for test_plan in test_plans:
-                test_runs: List[str] = test_plan.get("testRuns", [])
+                test_runs: List[Dict[str, Any]] = test_plan.get("testRuns", [])
                 if test_run["key"] in [item["key"] for item in test_runs]:
                     self.edit_test_plan(test_plan_key=test_plan["key"], test_runs=[key])
 
@@ -1039,10 +1039,10 @@ class Adaptavist():
     def _upload_file_by_name(self, request_url: str, attachment: str, filename: str) -> bool:
         """Updoad file by filename to Adaptavist."""
         try:
-            attachment = open(attachment, "rb")
+            fp = open(attachment, "rb")
         except OSError as ex:
             self._logger.error("attachment failed. %s", ex)
             return False
-        success = self._upload_file(request_url, filename, attachment)
-        attachment.close()
+        success = self._upload_file(request_url, fp, filename)
+        fp.close()
         return success

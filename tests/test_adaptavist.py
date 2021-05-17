@@ -4,6 +4,7 @@ from adaptavist import Adaptavist
 
 from . import load_fixture
 
+
 class TestAdaptavist:
 
     def test_get_users(self, requests_mock):
