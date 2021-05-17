@@ -377,7 +377,7 @@ class Adaptavist():
                     continue
                 request.raise_for_status()
             except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
-                self._logger.debug("request failed. %s", ex)
+                self._logger.error("request failed. %s", ex)
                 return False
 
             response = request.json()
@@ -900,48 +900,12 @@ class Adaptavist():
         :param test_result_id: The test result id.
         :param attachment: The attachment as filepath name or file-like object.
         :param filename: The optional filename.
-
-        :returns: True if succeeded, False if not
-        :rtype: bool
+        :returns: True if succeeded, False if not     
         """
-        needs_to_be_closed = False
-        if isinstance(attachment, str):
-            try:
-                attachment = open(attachment, "rb")
-            except OSError as ex:
-                self._logger.error("Attaching failed. %s", ex)
-                return False
-            needs_to_be_closed = True
-        elif not filename and not attachment.name:
-            self._logger.error("Attachment name is missing")
-            return False
-        elif hasattr(attachment, "read") and hasattr(attachment, "mode") and attachment.mode != "rb":
-            self._logger.error("%s not opened in 'rb' mode, attaching file may fail", attachment.name)
-            return False
-
-        if not filename:
-            filename = attachment.name
-
-        stream = requests_toolbelt.MultipartEncoder(fields={"file": (filename, attachment, "application/octet-stream")})
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
-        headers = {**self._headers}
-        headers["Content-type"] = stream.content_type
-        headers["X-Atlassian-Token"] = "nocheck"
-
-        try:
-            self._logger.debug("Attaching %s to %s", filename, test_result_id)
-            request = requests.post(request_url, auth=self._authentication, headers=headers, data=stream)
-            request.raise_for_status()
-        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
-            self._logger.error("request failed. %s", ex)
-            if needs_to_be_closed:
-                attachment.close()
-            return False
-
-        if needs_to_be_closed:
-            attachment.close()
-
-        return True
+        if isinstance(attachment, BinaryIO):
+            return self._upload_file(request_url, attachment, filename)
+        return self._upload_file_by_name(request_url, attachment, filename)
 
     def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs) -> Optional[int]:
         """
@@ -1003,44 +967,10 @@ class Adaptavist():
         :param filename: The optional filename.
         :returns: True if succeeded, False if not
         """
-        needs_to_be_closed = False
-        if isinstance(attachment, str):
-            try:
-                attachment = open(attachment, "rb")
-            except OSError as ex:
-                self._logger.error("attachment failed. %s", ex)
-                return False
-            needs_to_be_closed = True
-        elif not filename and not attachment.name:
-            self._logger.error("attachment name missing")
-            return False
-        elif hasattr(attachment, "read") and hasattr(attachment, "mode") and attachment.mode != "rb":
-            self._logger.error("%s not opened in 'rb' mode, attaching file may fail.", attachment.name)
-            return False
-
-        if not filename:
-            filename = attachment.name
-
-        stream = requests_toolbelt.MultipartEncoder(fields={"file": (filename, attachment, "application/octet-stream")})
-
-        request_url = self._adaptavist_api_url + "/testresult/{0}/step/{1}/attachments".format(test_result_id, step - 1)
-        headers = {**self._headers}
-        headers["Content-type"] = stream.content_type
-        headers["X-Atlassian-Token"] = "nocheck"
-
-        try:
-            request = requests.post(request_url, auth=self._authentication, headers=headers, data=stream)
-            request.raise_for_status()
-        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
-            self._logger.error("request failed. %s", ex)
-            if needs_to_be_closed:
-                attachment.close()
-            return False
-
-        if needs_to_be_closed:
-            attachment.close()
-
-        return True
+        request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
+        if isinstance(attachment, BinaryIO):
+            return self._upload_file(request_url, attachment, filename)
+        return self._upload_file_by_name(request_url, attachment, filename)
 
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""
@@ -1089,3 +1019,30 @@ class Adaptavist():
             self._logger.error("request failed. %s", ex)
             return None
         return request
+
+    def _upload_file(self, request_url: str, attachment: BinaryIO, filename: str) -> bool:
+        """Updoad file to Adaptavist."""
+        stream = requests_toolbelt.MultipartEncoder(fields={"file": (filename, attachment, "application/octet-stream")})
+        headers = {**self._headers}
+        headers["Content-type"] = stream.content_type
+        headers["X-Atlassian-Token"] = "nocheck"
+        filename = filename or attachment.name
+
+        try:
+            request = requests.post(request_url, auth=self._authentication, headers=headers, data=stream)
+            request.raise_for_status()
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.RequestException) as ex:
+            self._logger.error("request failed. %s", ex)
+            return False
+        return True
+
+    def _upload_file_by_name(self, request_url: str, attachment: str, filename: str) -> bool:
+        """Updoad file by filename to Adaptavist."""
+        try:
+            attachment = open(attachment, "rb")
+        except OSError as ex:
+            self._logger.error("attachment failed. %s", ex)
+            return False
+        success = self._upload_file(request_url, filename, attachment)
+        attachment.close()
+        return success
