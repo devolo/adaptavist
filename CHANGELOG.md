@@ -8,12 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add ability to create run with unassigned executor and unassigned assignee
+- Ability to create run with unassigned executor and unassigned assignee
+- Ability to create test cases in different statuses
 
 ### Changed
 
 - *BREAKING*: If the docs say list, they mean list. Strings are not supported anymore.
-- *BREAKING*: Do move test cases to the root folder, an empty string is needed
+- *BREAKING*: Do move test cases to the root folder, "/" is needed
 
 ## [1.1.2]
 
