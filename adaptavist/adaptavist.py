@@ -2,7 +2,6 @@
 
 import json
 import logging
-from io import FileIO
 from typing import Any, BinaryIO, Dict, List, Optional, Union
 from urllib.parse import quote_plus
 
@@ -249,10 +248,10 @@ class Adaptavist():
         :key priority: Priority of the test case (e.g. "Low", "Normal", "High")
         :key estimated_time: Estimated execution time in seconds
         :key status: Status of the test case (e.g. "Draft" or "Approved")
-        :key labels: List of labels to be added (add a "-" as first list entry to remove labels or to create a new list)
-        :key issue_links: List of issue keys to link the test case to (add a "-" as first list entry to remove links or to create a new list)
-        :key build_urls: List of build urls to be added (add a "-" as first list entry to remove urls or to create a new list)
-        :key code_bases: List of code base urls to be added (add a "-" as first list entry to remove urls or to create a new list)
+        :key labels: List of labels to be added (add a "-" as first list entry to create a new list)
+        :key issue_links: List of issue keys to link the test case to (add a "-" as first list entry to create a new list)
+        :key build_urls: List of build urls to be added (add a "-" as first list entry to create a new list)
+        :key code_bases: List of code base urls to be added (add a "-" as first list entry to create a new list)
         :returns: True if succeeded, False if not
         """
         folder: Optional[str] = kwargs.pop("folder", None)
@@ -464,9 +463,9 @@ class Adaptavist():
         :key name: Name of the test plan
         :key objective: Objective of the test plan
         :key status: Status of the test case (e.g. "Draft" or "Approved")
-        :key labels: List of labels to be added (add a "-" as first list entry to remove labels or to create a new list)
-        :key issue_links: List of issue keys to link the test plan to (add a "-" as first list entry to remove links or to create a new list)
-        :key test_runs: List of test run keys to be linked/added to the test plan ex. ["TEST-R2","TEST-R7"] (add a "-" as first list entry to remove links or to create a new list)
+        :key labels: List of labels to be added (add a "-" as first list entry to create a new list)
+        :key issue_links: List of issue keys to link the test plan to (add a "-" as first list entry to create a new list)
+        :key test_runs: List of test run keys to be linked/added to the test plan ex. ["TEST-R2","TEST-R7"] (add a "-" as first list entry to create a new list)
         :returns: True if succeeded, False if not
         """
         folder: Optional[str] = kwargs.pop("folder", None)
@@ -611,12 +610,14 @@ class Adaptavist():
 
         assignee = get_executor() if assignee is None else assignee
         executor = get_executor() if executor is None else executor
-        test_cases_list_of_dicts = [{
-            "testCaseKey": test_case_key,
-            "environment": environment,
-            "assignedTo": assignee or None,  # The API uses null for unassigned
-            "executedBy": executor or None,  # The API uses null for unassigned
-        } for test_case_key in test_cases]
+        test_cases_list_of_dicts = [
+            {
+                "testCaseKey": test_case_key,
+                "environment": environment,
+                "assignedTo": assignee or None,  # The API uses null for unassigned
+                "executedBy": executor or None,  # The API uses null for unassigned
+            } for test_case_key in test_cases
+        ]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
         request_data = {
@@ -683,8 +684,8 @@ class Adaptavist():
         .. note:: This method is using JIRA API and is much faster than getting test results for each test run via Adaptavist API.
                   By simple transposing the result list it is possible to get all the results based on test run keys.
 
-        :param last_result_only: If true, returns only the last test result of each single test execution (just like in the field 'items' of /testrun/{testRunKey}, s.a. get_test_run())
-                                 If false, returns all test results, i.e. even those ones that have been overwritten (just like in /testrun/{testRunKey}/testresults, s.a. get_test_results())
+        :param last_result_only: If true, returns only the last test result of each single test execution
+                                 If false, returns all test results, i.e. even those ones that have been overwritten
         :returns: Test results
         """
         test_results: List = []
@@ -742,8 +743,8 @@ class Adaptavist():
         :return: List of ids of all the test results that were created
         """
         environment: str = kwargs.pop("environment", "")
-        assignee: Optional[str] =  kwargs.pop("assignee", None)
-        executor: Optional[str] =  kwargs.pop("executor", None)
+        assignee: Optional[str] = kwargs.pop("assignee", None)
+        executor: Optional[str] = kwargs.pop("executor", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
@@ -806,8 +807,8 @@ class Adaptavist():
         comment: str = kwargs.pop("comment", "")
         execute_time: Optional[int] = kwargs.pop("execute_time", None)
         environment: str = kwargs.pop("environment", "")
-        assignee: Optional[str] =  kwargs.pop("assignee", None)
-        executor: Optional[str] =  kwargs.pop("executor", None)
+        assignee: Optional[str] = kwargs.pop("assignee", None)
+        executor: Optional[str] = kwargs.pop("executor", None)
         issue_links: List[str] = kwargs.pop("issue_links", [])
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
@@ -820,7 +821,7 @@ class Adaptavist():
             "comment": comment,
             "environment": environment,
             "assignedTo": executor or None,  # The API uses null for unassigned
-            "executedBy": executor or None,  # The API uses null for unassigned          
+            "executedBy": executor or None,  # The API uses null for unassigned
             "status": status,
         }
         if execute_time is not None:
@@ -853,8 +854,8 @@ class Adaptavist():
         comment: Optional[str] = kwargs.pop("comment", None)
         execute_time: Optional[int] = kwargs.pop("execute_time", None)
         environment: Optional[str] = kwargs.pop("environment", None)
-        assignee: Optional[str] =  kwargs.pop("assignee", None)
-        executor: Optional[str] =  kwargs.pop("executor", None)
+        assignee: Optional[str] = kwargs.pop("assignee", None)
+        executor: Optional[str] = kwargs.pop("executor", None)
         issue_links: Optional[List[str]] = kwargs.pop("issue_links", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
@@ -911,8 +912,8 @@ class Adaptavist():
         """
         comment: Optional[str] = kwargs.pop("comment", None)
         environment: Optional[str] = kwargs.pop("environment", None)
-        assignee: Optional[str] =  kwargs.pop("assignee", None)
-        executor: Optional[str] =  kwargs.pop("executor", None)
+        assignee: Optional[str] = kwargs.pop("assignee", None)
+        executor: Optional[str] = kwargs.pop("executor", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
@@ -960,7 +961,7 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
         if isinstance(attachment, str):
             return self._upload_file_by_name(request_url, attachment, filename)
-        return self._upload_file(request_url, attachment, filename)       
+        return self._upload_file(request_url, attachment, filename)
 
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""

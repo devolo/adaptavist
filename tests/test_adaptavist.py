@@ -51,7 +51,8 @@ class TestAdaptavist:
 
     def test_get_folders(self, requests_mock):
         """Test getting all folders of a project."""
-        requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/project/10000/foldertree/testcase?startAt=0&maxResults=200", text=load_fixture("get_folders.json"))
+        requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/project/10000/foldertree/testcase?startAt=0&maxResults=200",
+                          text=load_fixture("get_folders.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
         with patch("adaptavist.Adaptavist.get_projects", return_value=json.loads(load_fixture("get_projects.json"))):
@@ -85,7 +86,8 @@ class TestAdaptavist:
 
     def test_get_test_cases(self, requests_mock):
         """Test getting all test cases of a project."""
-        requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testcase/search?query=folder+%3C%3D+%22%2F%22&startAt=0", text=load_fixture("get_test_cases.json"))
+        requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testcase/search?query=folder+%3C%3D+%22%2F%22&startAt=0",
+                          text=load_fixture("get_test_cases.json"))
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testcase/search?query=folder+%3C%3D+%22%2F%22&startAt=1", text="[]")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
@@ -204,7 +206,8 @@ class TestAdaptavist:
 
     def test_get_test_plans(self, requests_mock):
         """Test getting all test plans of a project."""
-        requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testplan/search?query=folder+%3C%3D+%22%2F%22&startAt=0", text=load_fixture("get_test_plans.json"))
+        requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testplan/search?query=folder+%3C%3D+%22%2F%22&startAt=0",
+                          text=load_fixture("get_test_plans.json"))
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testplan/search?query=folder+%3C%3D+%22%2F%22&startAt=1", text="[]")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
@@ -259,8 +262,12 @@ class TestAdaptavist:
 
     def test_get_test_run_by_name(self, requests_mock):
         """Test getting a test run of a project by its name."""
-        requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/testrun/search?startAt=0&maxResults=10000&query=testRun.name+%3D+%22Testplan%22&fields=id,key,name", text=load_fixture("get_test_run_by_name.json"))
-        requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/testrun/search?startAt=1&maxResults=10000&query=testRun.name+%3D+%22Testplan%22&fields=id,key,name", text='{"results":[]}')
+        requests_mock.get(
+            f"{TestAdaptavist._jira_url}/rest/tests/1.0/testrun/search?startAt=0&maxResults=10000&query=testRun.name+%3D+%22Testplan%22&fields=id,key,name",
+            text=load_fixture("get_test_run_by_name.json"))
+        requests_mock.get(
+            f"{TestAdaptavist._jira_url}/rest/tests/1.0/testrun/search?startAt=1&maxResults=10000&query=testRun.name+%3D+%22Testplan%22&fields=id,key,name",
+            text='{"results":[]}')
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
         test_run = adaptavist.get_test_run_by_name(test_run_name="Testplan")
@@ -346,7 +353,8 @@ class TestAdaptavist:
 
     def test_get_test_execution_results(self, requests_mock):
         """Test getting all test execution results."""
-        requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/reports/testresults?startAt=0&maxResults=10000", text=load_fixture("get_test_execution_results.json"))
+        requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/reports/testresults?startAt=0&maxResults=10000",
+                          text=load_fixture("get_test_execution_results.json"))
         requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/reports/testresults?startAt=1&maxResults=10000", text='{"results":[]}')
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
@@ -425,7 +433,13 @@ class TestAdaptavist:
 
         # Test that optional fields are send if set
         with patch("adaptavist.Adaptavist._put") as put:
-            adaptavist.edit_test_result_status(test_run_key="JQA-R123", test_case_key="JQA-T123", status=STATUS_FAIL, environment="Firefox", comment="Test", execute_time=3, issue_links=["JQA-123"])
+            adaptavist.edit_test_result_status(test_run_key="JQA-R123",
+                                               test_case_key="JQA-T123",
+                                               status=STATUS_FAIL,
+                                               environment="Firefox",
+                                               comment="Test",
+                                               execute_time=3,
+                                               issue_links=["JQA-123"])
             assert put.call_args.args[1]["environment"] == "Firefox"
             assert put.call_args.args[1]["comment"] == "Test"
             assert put.call_args.args[1]["executionTime"] == 3000
@@ -440,7 +454,7 @@ class TestAdaptavist:
             assert not hasattr(put.call_args.args[1], "issueLinks")
 
     def test_add_test_result_attachment(self):
-        """Test adding an attachment."""      
+        """Test adding an attachment."""
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), \
@@ -467,7 +481,12 @@ class TestAdaptavist:
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123/testcase/JQA-T123/testresult")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
-        with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123, "status": STATUS_FAIL, "scriptResults": [{"index": 0, "status": STATUS_FAIL}]}):
+        with patch("adaptavist.Adaptavist.get_test_result",
+                   return_value={
+                       "id": 123, "status": STATUS_FAIL, "scriptResults": [{
+                           "index": 0, "status": STATUS_FAIL
+                       }]
+                   }):
             assert adaptavist.edit_test_script_status(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1, status=STATUS_PASS)
 
         # Test that executor and assignee are submitted as null if empty string is given
@@ -480,7 +499,13 @@ class TestAdaptavist:
         # Test that optional fields are send if set
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123, "status": STATUS_FAIL}), \
              patch("adaptavist.Adaptavist._put") as put:
-            adaptavist.edit_test_script_status(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1, status=STATUS_PASS, environment="Firefox", assignee="Testuser", executor="Testuser")
+            adaptavist.edit_test_script_status(test_run_key="JQA-R123",
+                                               test_case_key="JQA-T123",
+                                               step=1,
+                                               status=STATUS_PASS,
+                                               environment="Firefox",
+                                               assignee="Testuser",
+                                               executor="Testuser")
             assert put.call_args.args[1]["environment"] == "Firefox"
             assert put.call_args.args[1]["assignedTo"] == "Testuser"
             assert put.call_args.args[1]["executedBy"] == "Testuser"
@@ -494,7 +519,7 @@ class TestAdaptavist:
             assert not hasattr(put.call_args.args[1], "executedBy")
 
     def test_add_test_script_attachment(self):
-        """Test adding an attachment."""      
+        """Test adding an attachment."""
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), \
