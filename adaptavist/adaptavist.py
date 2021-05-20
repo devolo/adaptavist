@@ -2,6 +2,7 @@
 
 import json
 import logging
+from io import FileIO
 from typing import Any, BinaryIO, Dict, List, Optional, Union
 from urllib.parse import quote_plus
 
@@ -890,12 +891,9 @@ class Adaptavist():
         """
         test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
-        if isinstance(attachment, BinaryIO):
-            return self._upload_file(request_url, attachment, filename)
-        if not filename:
-            self._logger.error("The filename '%s' is not valid.", filename)
-            raise SyntaxError("No valid filename given.")
-        return self._upload_file_by_name(request_url, attachment, filename)
+        if isinstance(attachment, str):
+            return self._upload_file_by_name(request_url, attachment, filename)
+        return self._upload_file(request_url, attachment, filename)
 
     def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs) -> bool:
         """
@@ -960,12 +958,9 @@ class Adaptavist():
         """
         test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
-        if isinstance(attachment, BinaryIO):
-            return self._upload_file(request_url, attachment, filename)
-        if not filename:
-            self._logger.error("The filename '%s' is not valid.", filename)
-            raise SyntaxError("No valid filename given.")
-        return self._upload_file_by_name(request_url, attachment, filename)
+        if isinstance(attachment, str):
+            return self._upload_file_by_name(request_url, attachment, filename)
+        return self._upload_file(request_url, attachment, filename)       
 
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""
@@ -1031,6 +1026,8 @@ class Adaptavist():
 
     def _upload_file_by_name(self, request_url: str, attachment: str, filename: str) -> bool:
         """Updoad file by filename to Adaptavist."""
+        if not filename:
+            raise SyntaxError("No filename given.")
         try:
             fp = open(attachment, "rb")
         except OSError as ex:

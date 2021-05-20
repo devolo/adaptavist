@@ -1,5 +1,6 @@
 """Test the Adaptavist module."""
 import json
+from io import BytesIO
 from unittest.mock import mock_open, patch
 
 from pytest import raises
@@ -453,6 +454,14 @@ class TestAdaptavist:
              raises(SyntaxError):
             assert adaptavist.add_test_result_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123", attachment="testfile")
 
+        # Test that we can handle IO objects
+        with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), \
+             patch("requests_toolbelt.MultipartEncoder"), \
+             patch("requests.post"):
+            attachment = BytesIO(b"Testdata")
+            attachment.name = "testdata.txt"
+            assert adaptavist.add_test_result_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123", attachment=attachment)
+
     def test_edit_test_script_status(self, requests_mock):
         """Test editing a test stript."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123/testcase/JQA-T123/testresult")
@@ -498,3 +507,11 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), \
              raises(SyntaxError):
             assert adaptavist.add_test_script_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1, attachment="testfile")
+
+        # Test that we can handle IO objects
+        with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), \
+             patch("requests_toolbelt.MultipartEncoder"), \
+             patch("requests.post"):
+            attachment = BytesIO(b"Testdata")
+            attachment.name = "testdata.txt"
+            assert adaptavist.add_test_script_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1, attachment=attachment)
