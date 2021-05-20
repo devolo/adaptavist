@@ -9,7 +9,7 @@ import requests
 import requests_toolbelt
 
 from ._helper import build_folder_names, get_executor, update_field, update_multiline_field
-from .const import KEEP_ORIGINAL_VALUE, TEST_CASE, TEST_PLAN, TEST_RUN
+from .const import STATUS_APPROVED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
 
 
 class Adaptavist():
@@ -122,13 +122,17 @@ class Adaptavist():
 
     def create_folder(self, project_key: str, folder_type: str, folder_name: str) -> Optional[int]:
         """
-        Create a new environment.
+        Create a new folder if it does not exist.
 
-        :param project_key: Project key of the environment ex. "TEST"
+        :param project_key: Project key of the folder ex. "TEST"
         :param folder_type: Type of the folder to be created ("TEST_CASE", "TEST_PLAN" or "TEST_RUN")
         :param folder_name: Name of the folder to be created
         :return: ID of the folder created
         """
+        folder_name = f"/{folder_name}".replace("//", "/")
+        if folder_name == "/" or folder_name in self.get_folders(project_key, folder_type):
+            return None
+
         request_url = f"{self._adaptavist_api_url}/folder"
         request_data = {
             "projectKey": project_key,
@@ -142,7 +146,7 @@ class Adaptavist():
         response = request.json()
         return response["id"]
 
-    def get_test_case(self, test_case_key: str) -> Dict[str, str]:
+    def get_test_case(self, test_case_key: str) -> Dict[str, Any]:
         """
         Get info about a test case.
 
@@ -154,7 +158,7 @@ class Adaptavist():
         request = self._get(request_url)
         return {} if not request else request.json()
 
-    def get_test_cases(self, search_mask: str = "") -> List[Dict[str, str]]:
+    def get_test_cases(self, search_mask: str = "") -> List[Dict[str, Any]]:
         """
         Get a list of test cases matching the search mask.
 
@@ -189,32 +193,32 @@ class Adaptavist():
         :key precondition: Precondition(s) to be given in order to be able to execute this test case
         :key priority: Priority of the test case (e.g. "Low", "Normal", "High")
         :key estimated_time: Estimated execution time in seconds
+        :key status: Status of the test case (e.g. "Draft" or "Approved")
         :key labels: List of labels to be added
         :key issue_links: List of issue keys to link the new test case to
         :key steps: List of steps to add. Each step as a dictionary (like {"description": <string>, "expectedResult": <string>}).
         :return: ID of the test plan created
         """
-        folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")
+        folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")  # Folders always need to start with /
         objective: str = kwargs.pop("objective", "")
         precondition: str = kwargs.pop("precondition", "")
         priority: str = kwargs.pop("priority", "")
         estimated_time: int = kwargs.pop("estimated_time", 0) * 1000  # We actually need it in milliseconds
+        status: str = kwargs.pop("status", STATUS_APPROVED)
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         steps: List[Dict[str, Any]] = kwargs.pop("steps", [])
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        if folder not in self.get_folders(project_key=project_key, folder_type=TEST_CASE):
-            self.create_folder(project_key=project_key, folder_type=TEST_CASE, folder_name=folder)
+        self.create_folder(project_key=project_key, folder_type=TEST_CASE, folder_name=folder)
 
         request_url = f"{self._adaptavist_api_url}/testcase"
-        # TODO: Use constants for step_type
         request_data = {
             "projectKey": project_key,
             "name": test_case_name,
-            "folder": folder,
-            "status": "Approved",
+            "folder": None if folder == "/" else folder,  # The API uses null for the root folder
+            "status": status,
             "objective": objective,
             "precondition": precondition,
             "priority": priority,
@@ -222,7 +226,7 @@ class Adaptavist():
             "labels": labels,
             "issueLinks": issue_links,
             "testScript": {
-                "type": "STEP_BY_STEP", "steps": json.dumps(steps)
+                "type": STEP_TYPE_BY_STEP, "steps": json.dumps(steps)
             },
         }
         self._logger.debug("Creating test case %s", project_key)
@@ -237,24 +241,26 @@ class Adaptavist():
         Edit given test case.
 
         :param test_case_key: Test case key to be edited. ex. "JQA-T1234"
-        :key folder: Folder to move the test case into - if not given, folder is not changed - if empty, folder will be (re-)moved to root
+        :key folder: Folder to move the test case into - if not given, folder is not changed
         :key name: Name of the test case
         :key objective: Objective of the test case, i.e. the overall description of its purpose
         :key precondition: Precondition(s) to be given in order to be able to execute this test case
         :key priority: Priority of the test case (e.g. "Low", "Normal", "High")
-        :key estimated_time: estimated execution time in seconds.
+        :key estimated_time: Estimated execution time in seconds
+        :key status: Status of the test case (e.g. "Draft" or "Approved")
         :key labels: List of labels to be added (add a "-" as first list entry to remove labels or to create a new list)
         :key issue_links: List of issue keys to link the test case to (add a "-" as first list entry to remove links or to create a new list)
         :key build_urls: List of build urls to be added (add a "-" as first list entry to remove urls or to create a new list)
         :key code_bases: List of code base urls to be added (add a "-" as first list entry to remove urls or to create a new list)
         :returns: True if succeeded, False if not
         """
-        folder: str = kwargs.pop("folder", KEEP_ORIGINAL_VALUE)
+        folder: Optional[str] = kwargs.pop("folder", None)
         name: str = kwargs.pop("name", "")
         objective: str = kwargs.pop("objective", "")
         precondition: str = kwargs.pop("precondition", "")
         priority: str = kwargs.pop("priority", "")
         estimated_time: int = kwargs.pop("estimated_time", 0) * 1000  # We actually need it in milliseconds
+        status: str = kwargs.pop("status", "")
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         build_urls: List[str] = kwargs.pop("build_urls", [])
@@ -262,28 +268,24 @@ class Adaptavist():
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
-        self._logger.debug("Getting current data of test case '%s'", test_case_key)
-        request = self._get(request_url)
-        if not request:
+        response = self.get_test_case(test_case_key)
+        if not response:
             return False
 
-        response = request.json()
-
+        request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
         request_data = {
             "name": name or response.get("name"),
             "objective": objective or response.get("objective"),
             "precondition": precondition or response.get("precondition"),
             "priority": priority or response.get("priority"),
-            "estimatedTime": estimated_time or response.get("estimatedTime")
+            "estimatedTime": estimated_time or response.get("estimatedTime"),
+            "status": status or response.get("status")
         }
 
-        if folder not in [KEEP_ORIGINAL_VALUE, ""]:
-            folder = ("/" + folder).replace("//", "/")
-        if folder not in [KEEP_ORIGINAL_VALUE, *self.get_folders(project_key=response["projectKey"], folder_type=TEST_CASE)]:
+        if folder is not None:
+            folder = f"/{folder}".replace("//", "/")
             self.create_folder(project_key=response["projectKey"], folder_type=TEST_CASE, folder_name=folder)
-        if folder not in [KEEP_ORIGINAL_VALUE, response["folder"]]:
-            request_data["folder"] = folder
+            request_data["folder"] = folder if folder != "/" else None
 
         # append labels and issue links to the current list or create new ones
         update_field(response.get("labels", []), request_data, "labels", labels)
@@ -328,20 +330,17 @@ class Adaptavist():
         :returns: True if succeeded, False if not
         """
         for test_case_key in test_case_keys:
-            request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
-            request = self._get(request_url)
-            if request is None:
+            response = self.get_test_case(test_case_key)
+            if not response:
                 self._logger.warning("Test case %s was not found", test_case_key)
                 continue
-
-            response = request.json()
 
             # append issue to the current list of issue links
             issue_links = response.get("issueLinks", [])
             if issue_key not in issue_links:
                 issue_links.append(issue_key)
 
-                # according to doc only fields given in the request body are updated.
+                request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
                 request_data = {"issueLinks": issue_links}
                 self._logger.debug("Updating test case %s", test_case_key)
                 if not self._put(request_url, request_data):
@@ -358,21 +357,17 @@ class Adaptavist():
         :returns: True if succeeded, False if not
         """
         for test_case_key in test_case_keys:
-            request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
-            self._logger.debug("Getting test case %s", test_case_key)
-            request = self._get(request_url)
-            if request is None:
+            response = self.get_test_case(test_case_key)
+            if not response:
                 self._logger.warning("Test case %s was not found", test_case_key)
                 continue
-
-            response = request.json()
 
             # remove issue from the current list of issue links
             issue_links = response.get("issueLinks", [])
             if issue_key in issue_links:
                 issue_links.remove(issue_key)
 
-                # according to doc only fields given in the request body are updated.
+                request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
                 request_data = {"issueLinks": issue_links}
                 self._logger.debug("Updating test case %s", test_case_key)
                 if not self._put(request_url, request_data):
@@ -380,7 +375,7 @@ class Adaptavist():
 
         return True
 
-    def get_test_plan(self, test_plan_key: str) -> Dict[str, str]:
+    def get_test_plan(self, test_plan_key: str) -> Dict[str, Any]:
         """
         Get info about a test plan.
 
@@ -423,30 +418,29 @@ class Adaptavist():
         :param test_plan_name: Name of the test plan to be created
         :key folder: Name of the folder where to create the new test plan
         :key objective: Objective of the new test plan
+        :key status: Status of the test case (e.g. "Draft" or "Approved")
         :key labels: List of labels to be added
         :key issue_links: List of issue keys to link the new test plan to
         :key test_runs: List of test run keys to be linked to the test plan ex. ["TEST-R2","TEST-R7"]
         :return: Key of the test plan created
         """
-        folder: str = kwargs.pop("folder", "")
+        folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")  # Folders always need to start with /
         objective: str = kwargs.pop("objective", "")
+        status: str = kwargs.pop("status", STATUS_APPROVED)
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         test_runs: List[str] = kwargs.pop("test_runs", [])
-        # TODO: Introduce status
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        folder = ("/" + folder).replace("//", "/") if folder else ""
-        if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_PLAN):
-            self.create_folder(project_key=project_key, folder_type=TEST_PLAN, folder_name=folder)
+        self.create_folder(project_key=project_key, folder_type=TEST_PLAN, folder_name=folder)
 
         request_url = f"{self._adaptavist_api_url}/testplan"
         request_data = {
             "projectKey": project_key,
             "name": test_plan_name,
-            "folder": folder,
-            "status": "Approved",
+            "folder": None if folder == "/" else folder,  # The API uses null for the root folder
+            "status": status,
             "objective": objective,
             "labels": labels,
             "issueLinks": issue_links,
@@ -468,37 +462,37 @@ class Adaptavist():
         :key folder: Folder to move the test plan into
         :key name: Name of the test plan
         :key objective: Objective of the test plan
+        :key status: Status of the test case (e.g. "Draft" or "Approved")
         :key labels: List of labels to be added (add a "-" as first list entry to remove labels or to create a new list)
         :key issue_links: List of issue keys to link the test plan to (add a "-" as first list entry to remove links or to create a new list)
         :key test_runs: List of test run keys to be linked/added to the test plan ex. ["TEST-R2","TEST-R7"] (add a "-" as first list entry to remove links or to create a new list)
         :returns: True if succeeded, False if not
         """
-        folder: str = kwargs.pop("folder", KEEP_ORIGINAL_VALUE)
+        folder: Optional[str] = kwargs.pop("folder", None)
         name: str = kwargs.pop("name", "")
         objective: str = kwargs.pop("objective", "")
+        status: str = kwargs.pop("status", "")
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         test_runs: List[str] = kwargs.pop("test_runs", [])
-        # TODO: Introduce status
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        request_url = f"{self._adaptavist_api_url}/testplan/{test_plan_key}"
-        self._logger.debug("Getting test plan %s", test_plan_key)
-        request = self._get(request_url)
-        if not request:
+        response = self.get_test_plan(test_plan_key)
+        if not response:
             return False
 
-        response = request.json()
+        request_url = f"{self._adaptavist_api_url}/testplan/{test_plan_key}"
+        request_data = {
+            "name": name or response.get("name"),
+            "objective": objective or response.get("objective"),
+            "status": status or response.get("status"),
+        }
 
-        request_data = {"name": name or response.get("name"), "objective": objective or response.get("objective")}
-
-        if folder not in [KEEP_ORIGINAL_VALUE, ""]:
-            folder = ("/" + folder).replace("//", "/")
-        if folder not in [KEEP_ORIGINAL_VALUE, response["folder"]]:
-            if folder not in self.get_folders(project_key=response["projectKey"], folder_type=TEST_PLAN):
-                self.create_folder(project_key=response["projectKey"], folder_type=TEST_PLAN, folder_name=folder)
-            request_data["folder"] = folder
+        if folder is not None:
+            folder = f"/{folder}".replace("//", "/")
+            self.create_folder(project_key=response["projectKey"], folder_type=TEST_CASE, folder_name=folder)
+            request_data["folder"] = folder if folder != "/" else None
 
         # append labels, test runs and issue links to the current list or create new ones
         update_field(response.get("labels", []), request_data, "labels", labels)
@@ -506,7 +500,6 @@ class Adaptavist():
         update_field(response.get("issueLinks", []), request_data, "issueLinks", issue_links)
 
         self._logger.debug("Updating test plan %s", test_plan_key)
-        # according to doc only fields given in the request body are updated.
         return bool(self._put(request_url, request_data))
 
     def get_test_run(self, test_run_key: str) -> Dict[str, Any]:
@@ -521,7 +514,7 @@ class Adaptavist():
         request = self._get(request_url)
         return {} if not request else request.json()
 
-    def get_test_run_by_name(self, test_run_name: str) -> Dict[str, str]:
+    def get_test_run_by_name(self, test_run_name: str) -> Dict[str, Any]:
         """
         Get info about a test run (last one found by name).
 
@@ -544,7 +537,7 @@ class Adaptavist():
             i += len(results)
         return {key: test_runs[-1][key] for key in ["key", "name"]} if test_runs else {}
 
-    def get_test_runs(self, search_mask: str = "", **kwargs) -> List[Dict[str, str]]:
+    def get_test_runs(self, search_mask: str = "", **kwargs) -> List[Dict[str, Any]]:
         """
         Get a list of test runs matching the search mask.
 
@@ -599,27 +592,29 @@ class Adaptavist():
         :key test_plan_key: Test plan key to link this test run to
         :key test_cases: List of test case keys to be linked to the test run ex. ["TEST-T1026","TEST-T1027"]
         :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
-        :key unassigned_executor: Executor and assigned to will be unassigned if true
+        :key assignee: Assignee of the test case. Use "" for unassigned, None to determine automatically
+        :key executor: Executer of the test case. Use "" for unassigned, None to determine automatically
         :return: Key of the test run created
         """
-        folder: str = kwargs.pop("folder", "")
+        folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")
         issue_key: str = kwargs.pop("issue_key", "")
         test_plan_key: str = kwargs.pop("test_plan_key", "")
         test_cases: List[str] = kwargs.pop("test_cases", [])
         environment: str = kwargs.pop("environment", "")
-        unassigned_executor: bool = kwargs.pop("unassigned_executor", False)
+        assignee: Optional[str] = kwargs.pop("assignee", None)
+        executor: Optional[str] = kwargs.pop("executor", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
-        folder = ("/" + folder).replace("//", "/") if folder else ""
-        if folder and folder not in self.get_folders(project_key=project_key, folder_type=TEST_RUN):
-            self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
+        self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
-        assigned_data = {} if unassigned_executor else {"executedBy": get_executor(), "assignedTo": get_executor()}
+        assignee = get_executor() if assignee is None else assignee
+        executor = get_executor() if executor is None else executor
         test_cases_list_of_dicts = [{
             "testCaseKey": test_case_key,
             "environment": environment,
-            **assigned_data,
+            "assignedTo": assignee or None,  # The API uses null for unassigned
+            "executedBy": executor or None,  # The API uses null for unassigned
         } for test_case_key in test_cases]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
@@ -627,7 +622,7 @@ class Adaptavist():
             "projectKey": project_key,
             "testPlanKey": test_plan_key,
             "name": test_run_name,
-            "folder": folder,
+            "folder": None if folder == "/" else folder,  # The API uses null for the root folder
             "issueKey": issue_key,
             "items": test_cases_list_of_dicts,
         }
@@ -666,15 +661,14 @@ class Adaptavist():
             project_key=project_key or test_run["projectKey"],
             test_run_name=test_run_name or f"{test_run['name']} (cloned from {test_run['key']})",
             folder=folder or test_run["folder"],
-            issue_key=test_run["issue_key"],
+            issue_key=test_run["issueKey"],
             test_plan_key=test_plan_key,  # will be handled further below
             environment=environment or (test_run_items[0].get("environment", "") if test_run_items else ""),
             test_cases=[item["testCaseKey"] for item in test_run_items])
 
         # get test plans that contain the original test run and add cloned test run to them
         if not test_plan_key:
-            test_plans = self.get_test_plans()
-            for test_plan in test_plans:
+            for test_plan in self.get_test_plans():
                 test_runs: List[Dict[str, Any]] = test_plan.get("testRuns", [])
                 if test_run["key"] in [item["key"] for item in test_runs]:
                     self.edit_test_plan(test_plan_key=test_plan["key"], test_runs=[key])
@@ -738,13 +732,17 @@ class Adaptavist():
         Create new test results for a given test run.
 
         :param test_run_key: Test run key of the result to be updated. ex. "JQA-R1234"
-        :param results:
+        :param results: Results to report
         :param exclude_existing_test_cases: If true, creates test results only for new test cases (can be used to add test cases to existing test runs)
                                             If false, creates new test results for existing test cases as well
-        :key environment: environment to distinguish multiple executions (call get_environments() to get a list of available ones)
+        :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
+        :key assignee: Assignee of the test case. Use "" for unassigned, None to determine automatically
+        :key executor: Executer of the test case. Use "" for unassigned, None to determine automatically
         :return: List of ids of all the test results that were created
         """
         environment: str = kwargs.pop("environment", "")
+        assignee: Optional[str] =  kwargs.pop("assignee", None)
+        executor: Optional[str] =  kwargs.pop("executor", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
@@ -752,13 +750,15 @@ class Adaptavist():
         if not test_run:
             return []
 
+        assignee = get_executor() if assignee is None else assignee
+        executor = get_executor() if executor is None else executor
         request_data = []
         for result in results:
             if exclude_existing_test_cases and result["testCaseKey"] in [item["testCaseKey"] for item in test_run["items"]]:
                 continue
             data = {key: value for key, value in result.items()}
-            data["executedBy"] = get_executor()
-            data["assignedTo"] = data["executedBy"]
+            data["assignedTo"] = assignee or None  # The API uses null for unassigned
+            data["executedBy"] = executor or None  # The API uses null for unassigned
             data["environment"] = environment
             request_data.append(data)
 
@@ -781,10 +781,7 @@ class Adaptavist():
         :param test_case_key: Test case key of the result to be updated. ex. "JQA-T1234"
         :returns: Test result
         """
-        request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testresults"
-        self._logger.debug("Getting test result of %s in %s", test_case_key, test_run_key)
-        request = self._get(request_url)
-        response = [] if not request else request.json()
+        response = self.get_test_results(test_run_key)
         for item in response:
             if item["testCaseKey"] == test_case_key:
                 return item
@@ -800,27 +797,31 @@ class Adaptavist():
         :key comment: Comment to add
         :key execute_time: Execution time in seconds
         :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
+        :key assignee: Assignee of the test case. Use "" for unassigned, None to determine automatically
+        :key executor: Executer of the test case. Use "" for unassigned, None to determine automatically
         :key issue_links: List of issue keys to link the test result to
         :return: ID of the test result that was created
         """
         comment: str = kwargs.pop("comment", "")
         execute_time: Optional[int] = kwargs.pop("execute_time", None)
         environment: str = kwargs.pop("environment", "")
+        assignee: Optional[str] =  kwargs.pop("assignee", None)
+        executor: Optional[str] =  kwargs.pop("executor", None)
         issue_links: List[str] = kwargs.pop("issue_links", [])
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
 
-        executor = get_executor()
+        assignee = get_executor() if assignee is None else assignee
+        executor = get_executor() if executor is None else executor
         request_data: Dict[str, Any] = {
+            "comment": comment,
             "environment": environment,
-            "executedBy": executor,
-            "assignedTo": executor,
+            "assignedTo": executor or None,  # The API uses null for unassigned
+            "executedBy": executor or None,  # The API uses null for unassigned          
             "status": status,
         }
-        if comment is not None:
-            request_data["comment"] = comment
         if execute_time is not None:
             request_data["executionTime"] = execute_time * 1000
         if issue_links:
@@ -833,7 +834,7 @@ class Adaptavist():
         response = request.json()
         return response["id"]
 
-    def edit_test_result_status(self, test_run_key: str, test_case_key: str, status: str, **kwargs) -> Optional[int]:
+    def edit_test_result_status(self, test_run_key: str, test_case_key: str, status: str, **kwargs) -> bool:
         """
         Edit the last existing test result for a given test run and test case with the given status.
 
@@ -843,26 +844,30 @@ class Adaptavist():
         :key comment: Comment to the new status
         :key execute_time: Execution time in seconds
         :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
+        :key assignee: Assignee of the test case. Use "" for unassigned
+        :key executor: Executer of the test case. Use "" for unassigned
         :key issue_links: List of issue keys to link the test result to
-        :return: ID of the test result that was created
+        :return: True if succeeded, False if not
         """
         comment: Optional[str] = kwargs.pop("comment", None)
         execute_time: Optional[int] = kwargs.pop("execute_time", None)
         environment: Optional[str] = kwargs.pop("environment", None)
+        assignee: Optional[str] =  kwargs.pop("assignee", None)
+        executor: Optional[str] =  kwargs.pop("executor", None)
         issue_links: Optional[List[str]] = kwargs.pop("issue_links", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
-
-        executor = get_executor()
         request_data: Dict[str, Any] = {
-            "executedBy": executor,
-            "assignedTo": executor,
             "status": status,
         }
         if environment is not None:
-            request_data["environment"]
+            request_data["environment"] = environment
+        if assignee is not None:
+            request_data["assignedTo"] = assignee or None
+        if executor is not None:
+            request_data["executedBy"] = executor or None
         if comment is not None:
             request_data["comment"] = comment
         if execute_time is not None:
@@ -871,21 +876,19 @@ class Adaptavist():
             request_data["issueLinks"] = issue_links
 
         self._logger.debug("Updating test result for %s in %s", test_case_key, test_run_key)
-        request = self._put(request_url, request_data)
-        if not request:
-            return None
-        response = request.json()
-        return response["id"]
+        return bool(self._put(request_url, request_data))
 
-    def add_test_result_attachment(self, test_result_id: int, attachment: Union[str, BinaryIO], filename: str = "") -> bool:
+    def add_test_result_attachment(self, test_run_key: str, test_case_key: str, attachment: Union[str, BinaryIO], filename: str = "") -> bool:
         """
         Add attachment to a test result.
 
-        :param test_result_id: The test result id
+        :param test_run_key: Test run key. ex. "JQA-R1234"
+        :param test_case_key: Test case key. ex. "JQA-T1234"
         :param attachment: The attachment as filepath name or file-like object
         :param filename: The optional filename
         :returns: True if succeeded, False if not
         """
+        test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
         if isinstance(attachment, BinaryIO):
             return self._upload_file(request_url, attachment, filename)
@@ -894,7 +897,7 @@ class Adaptavist():
             raise SyntaxError("No valid filename given.")
         return self._upload_file_by_name(request_url, attachment, filename)
 
-    def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs) -> Optional[int]:
+    def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs) -> bool:
         """
         Edit test script result for a given test run and test case with the given status.
 
@@ -904,10 +907,14 @@ class Adaptavist():
         :param status: Status of the result to be updated. ex. "Fail"
         :key comment: Comment to the new status
         :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
-        :return: ID of the test result that was updated
+        :key assignee: Assignee of the test case. Use "" for unassigned, None to determine automatically
+        :key executor: Executer of the test case. Use "" for unassigned, None to determine automatically
+        :return: True if succeeded, False if not
         """
-        comment: str = kwargs.pop("comment", "")
-        environment: str = kwargs.pop("environment", "")
+        comment: Optional[str] = kwargs.pop("comment", None)
+        environment: Optional[str] = kwargs.pop("environment", None)
+        assignee: Optional[str] =  kwargs.pop("assignee", None)
+        executor: Optional[str] =  kwargs.pop("executor", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
@@ -926,33 +933,32 @@ class Adaptavist():
                 script_result["comment"] = comment
 
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
-
-        executor = get_executor()
         request_data = {
-            "environment": environment,
-            "executedBy": executor,
-            "assignedTo": executor,
             "status": test_result["status"],  # mandatory, to keep test result status unchanged
             "scriptResults": script_results,
         }
+        if environment is not None:
+            request_data["environment"] = environment
+        if assignee is not None:
+            request_data["assignedTo"] = assignee or None
+        if executor is not None:
+            request_data["executedBy"] = executor or None
 
         self._logger.debug("Updating test script for %s in %s", test_case_key, test_run_key)
-        request = self._put(request_url, request_data)
-        if not request:
-            return None
-        response = request.json()
-        return response["id"]
+        return bool(self._put(request_url, request_data))
 
-    def add_test_script_attachment(self, test_result_id: int, step: int, attachment: Union[str, BinaryIO], filename: str = "") -> bool:
+    def add_test_script_attachment(self, test_run_key: str, test_case_key: str, step: int, attachment: Union[str, BinaryIO], filename: str = "") -> bool:
         """
         Add attachment to a test script result.
 
-        :param test_result_id: The test result id.
+        :param test_run_key: Test run key. ex. "JQA-R1234"
+        :param test_case_key: Test case key. ex. "JQA-T1234"
         :param step: Index (starting from 1) of step to be updated.
         :param attachment: The attachment as filepath name or file-like object.
         :param filename: The optional filename.
         :returns: True if succeeded, False if not
         """
+        test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
         if isinstance(attachment, BinaryIO):
             return self._upload_file(request_url, attachment, filename)
