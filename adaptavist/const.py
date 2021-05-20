@@ -1,9 +1,14 @@
 """Constants used by the module."""
 
-KEEP_ORIGINAL_VALUE = r"\{keep_original_value\}"
-
 STATUS_APPROVED = "Approved"
+STATUS_BLOCKED = "Blocked"
+STATUS_DEPRECATED = "Deprecated"
+STATUS_DONE = "Done"
 STATUS_DRAFT = "Draft"
+STATUS_FAIL = "Fail"
+STATUS_IN_PROGRESS = "In progress"
+STATUS_NOT_EXECUTED = "Not executed"
+STATUS_PASS = "Pass"
 
 STEP_TYPE_BY_STEP = "STEP_BY_STEP"
 STEP_TYPE_PLAIN = "PLAIN_TEXT"
