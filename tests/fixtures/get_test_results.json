@@ -1,0 +1,35 @@
+[
+    {
+        "id": 500020,
+        "testCaseKey": "JQA-T123",
+        "status": "Fail",
+        "automated": true,
+        "environment": "Firefox",
+        "comment": "The test has failed on some automation tool procedure.",
+        "userKey": "vitor.pelizza",
+        "executionTime": 180000,
+        "executionDate": "2016-02-14T19:22:00-0300",
+        "executedBy": "vitor.pelizza",
+        "assignedTo": "cristiano.caetano",
+        "plannedStartDate": "2016-02-10T19:22:00-0300",
+        "plannedEndDate": "2016-02-12T19:22:00-0300",
+        "actualStartDate": "2016-02-12T19:22:00-0300",
+        "actualEndDate": "2016-02-14T19:22:00-0300",
+        "iteration": "Sprint 1",
+        "version": "1.1.0",
+        "customFields": {
+            "CI Server": "Bamboo"
+        },
+        "issueLinks": [
+            "JQA-123",
+            "JQA-456"
+        ],
+        "scriptResults": [
+            {
+                "index": 0,
+                "status": "Fail",
+                "comment": "This step has failed."
+            }
+        ]
+    }
+]

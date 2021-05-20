@@ -1,0 +1,33 @@
+[
+    {
+        "key": "JQA-R123",
+        "projectKey": "JQA",
+        "name": "Full regression",
+        "status": "In Progress",
+        "iteration": "Sprint 1",
+        "version": "1.1.0",
+        "folder": "/root folder/child folder",
+        "issueKey": "JQA-123",
+        "plannedStartDate": "2016-02-24T08:10:59.514Z",
+        "plannedEndDate": "2016-02-26T12:00:00.000Z",
+        "estimatedTime": 2338000,
+        "executionTime": 150000,
+        "testCaseCount": 2,
+        "issueCount": 1,
+        "items": [
+            {
+                "testCaseKey": "JQA-T123",
+                "environment": "Chrome",
+                "userKey": "vitor.pelizza",
+                "customFields": {
+                    "single choice": "Propulsion engines",
+                    "multichoice": "Brazil, England"
+                }
+            },
+            {
+                "testCaseKey": "JQA-T456",
+                "environment": "Firefox"
+            }
+        ]
+    }
+]

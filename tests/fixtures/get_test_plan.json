@@ -1,0 +1,42 @@
+{
+    "key": "JQA-P123",
+    "projectKey": "JQA",
+    "name": "Plan for a new version",
+    "status": "Draft",
+    "objective": "The objective of the test plan",
+    "labels": [
+        "Smoke",
+        "Functional"
+    ],
+    "comments": [
+        {
+            "createdBy": "vitor.pelizza",
+            "createdOn": "2018-01-26T18:09:51.000Z",
+            "body": "Vitor's comment"
+        }
+    ],
+    "issueLinks": [
+        "JQA-123",
+        "JQA-456"
+    ],
+    "customFields": {
+        "Is shared": true
+    },
+    "testRuns": [
+        {
+            "key": "JQA-R123",
+            "projectKey": "JQA",
+            "name": "Full regression",
+            "status": "In Progress",
+            "iteration": "Sprint 1",
+            "version": "1.1.0",
+            "issueKey": "JQA-123",
+            "plannedStartDate": "2016-02-24T08:10:59.514Z",
+            "plannedEndDate": "2016-02-26T12:00:00.000Z",
+            "estimatedTime": 2338000,
+            "executionTime": 150000,
+            "testCaseCount": 2,
+            "issueCount": 1
+        }
+    ]
+}
