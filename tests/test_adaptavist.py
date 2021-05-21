@@ -331,10 +331,10 @@ class TestAdaptavist:
              patch("adaptavist.Adaptavist.edit_test_plan") as edit_test_plan:
             test_run = adaptavist.clone_test_run(test_run_key="JQA-R123", test_run_name="Cloned test case")
             assert test_run == "JQA-R124"
-            assert create_test_run.call_args.kwargs["test_run_name"] == "Cloned test case"
+            assert create_test_run.call_args_list[0][1]["test_run_name"] == "Cloned test case"
             assert edit_test_plan.assert_called_once
 
-        # Test that clonded test cases are only linked, if the original test case was linked to something
+        # Test that cloned test cases are only linked, if the original test case was linked to something
         with patch("adaptavist.Adaptavist.get_test_run", return_value=json.loads(load_fixture("get_test_run.json"))), \
              patch("adaptavist.Adaptavist.create_test_run", return_value="JQA-R124") as create_test_run, \
              patch("adaptavist.Adaptavist.get_test_plans", return_value=[]), \
@@ -343,13 +343,13 @@ class TestAdaptavist:
             assert test_run == "JQA-R124"
             assert edit_test_plan.assert_not_called
 
-        # Test that clonded test append a suffix, if no name is given
+        # Test that cloned test append a suffix, if no name is given
         with patch("adaptavist.Adaptavist.get_test_run", return_value=json.loads(load_fixture("get_test_run.json"))), \
              patch("adaptavist.Adaptavist.create_test_run", return_value="JQA-R124") as create_test_run, \
              patch("adaptavist.Adaptavist.get_test_plans", return_value=[]), \
              patch("adaptavist.Adaptavist.edit_test_plan"):
             test_run = adaptavist.clone_test_run(test_run_key="JQA-R123")
-            assert create_test_run.call_args.kwargs["test_run_name"] == "Full regression (cloned from JQA-R123)"
+            assert create_test_run.call_args_list[0][1]["test_run_name"] == "Full regression (cloned from JQA-R123)"
 
     def test_get_test_execution_results(self, requests_mock):
         """Test getting all test execution results."""
