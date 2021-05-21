@@ -107,7 +107,7 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_case(project_key="JQA", test_case_name="Ensure the axial-flow pump is enabled")
-            assert post.call_args.args[1]['folder'] is None
+            assert post.call_args_list[0][0][1]['folder'] is None
 
     def test_edit_test_case(self, requests_mock):
         """Test editing a test case of a project."""
@@ -123,21 +123,21 @@ class TestAdaptavist:
              patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._put") as put:
             assert adaptavist.edit_test_case(test_case_key="JQA-T123", folder="/")
-            assert put.call_args.args[1]['folder'] is None
+            assert put.call_args_list[0][0][1]['folder'] is None
 
         # Test that existing labels are removed, if the list starts with "-"
         with patch("adaptavist.Adaptavist.get_test_case", return_value={"name": "Test case", "projectKey": "JQA", "labels": ["automated"]}), \
              patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._put") as put:
             assert adaptavist.edit_test_case(test_case_key="JQA-T123", folder="/", labels=["-", "tested"])
-            assert put.call_args.args[1]['labels'] == ["tested"]
+            assert put.call_args_list[0][0][1]['labels'] == ["tested"]
 
         # Test that existing custom fields are emptied, if the list starts with "-"
         with patch("adaptavist.Adaptavist.get_test_case", return_value={"name": "Test case", "projectKey": "JQA", "ci_server_url": ["mock://jenkins"]}), \
              patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._put") as put:
             assert adaptavist.edit_test_case(test_case_key="JQA-T123", folder="/", build_urls=["-", "mock://gitlab"])
-            assert put.call_args.args[1]['customFields'] == {"ci_server_url": "mock://gitlab"}
+            assert put.call_args_list[0][0][1]['customFields'] == {"ci_server_url": "mock://gitlab"}
 
     def test_delete_test_case(self, requests_mock):
         """Test deleting a test case of a project."""
@@ -227,7 +227,7 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_plan(project_key="JQA", test_plan_name="Plan for a new version")
-            assert post.call_args.args[1]['folder'] is None
+            assert post.call_args_list[0][0][1]['folder'] is None
 
     def test_edit_test_plan(self, requests_mock):
         """Test editing a test plan of a project."""
@@ -243,14 +243,14 @@ class TestAdaptavist:
              patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._put") as put:
             assert adaptavist.edit_test_plan(test_plan_key="JQA-P123", folder="/")
-            assert put.call_args.args[1]['folder'] is None
+            assert put.call_args_list[0][0][1]['folder'] is None
 
         # Test that existing labels are removed, if the list starts with "-"
         with patch("adaptavist.Adaptavist.get_test_plan", return_value={"name": "Test plan", "projectKey": "JQA", "labels": ["automated"]}), \
              patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._put") as put:
             assert adaptavist.edit_test_plan(test_plan_key="JQA-P123", folder="/", labels=["-", "tested"])
-            assert put.call_args.args[1]['labels'] == ["tested"]
+            assert put.call_args_list[0][0][1]['labels'] == ["tested"]
 
     def test_get_test_run(self, requests_mock):
         """Test getting a test run of a project by its key."""
@@ -304,22 +304,22 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_run(project_key="JQA", test_run_name="Plan for a new version")
-            assert post.call_args.args[1]['folder'] is None
+            assert post.call_args_list[0][0][1]['folder'] is None
 
         # Test that executor and assignee are submitted as null if empty string is given
         with patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_run(project_key="JQA", test_run_name="Run for a new version", test_cases=["JQA-T123"], assignee="", executor="")
-            assert post.call_args.args[1]['items'][0]['assignedTo'] is None
-            assert post.call_args.args[1]['items'][0]['executedBy'] is None
+            assert post.call_args_list[0][0][1]['items'][0]['assignedTo'] is None
+            assert post.call_args_list[0][0][1]['items'][0]['executedBy'] is None
 
         # Test that executor and assignee are determinded if not given
         with patch("adaptavist.Adaptavist.create_folder"), \
              patch("adaptavist.Adaptavist._post") as post, \
              patch("getpass.getuser", return_value="Testuser"):
             adaptavist.create_test_run(project_key="JQA", test_run_name="Run for a new version", test_cases=["JQA-T123"])
-            assert post.call_args.args[1]['items'][0]['assignedTo'] == "testuser"
-            assert post.call_args.args[1]['items'][0]['executedBy'] == "testuser"
+            assert post.call_args_list[0][0][1]['items'][0]['assignedTo'] == "testuser"
+            assert post.call_args_list[0][0][1]['items'][0]['executedBy'] == "testuser"
 
     def test_clone_test_run(self):
         """Test cloning an existing test run."""
@@ -381,8 +381,8 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.get_test_run", return_value=json.loads(load_fixture("get_test_run.json"))), \
              patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_results(test_run_key="JQA-R123", results=[{"status": "Fail", "testCaseKey": "JQA-T5678"}], assignee="", executor="")
-            assert post.call_args.args[1][0]['assignedTo'] is None
-            assert post.call_args.args[1][0]['executedBy'] is None
+            assert post.call_args_list[0][0][1][0]['assignedTo'] is None
+            assert post.call_args_list[0][0][1][0]['executedBy'] is None
 
     def test_get_test_result(self):
         """Test getting a test result of a test run."""
@@ -403,20 +403,20 @@ class TestAdaptavist:
         # Test that executor and assignee are submitted as null if empty string is given
         with patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_result(test_run_key="JQA-R123", test_case_key="JQA-T123", status=STATUS_PASS, assignee="", executor="")
-            assert post.call_args.args[1]["assignedTo"] is None
-            assert post.call_args.args[1]["executedBy"] is None
+            assert post.call_args_list[0][0][1]["assignedTo"] is None
+            assert post.call_args_list[0][0][1]["executedBy"] is None
 
         # Test that optional fields are send if set
         with patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_result(test_run_key="JQA-R123", test_case_key="JQA-T123", status=STATUS_PASS, execute_time=3, issue_links=["JQA-123"])
-            assert post.call_args.args[1]["executionTime"] == 3000
-            assert post.call_args.args[1]["issueLinks"] == ["JQA-123"]
+            assert post.call_args_list[0][0][1]["executionTime"] == 3000
+            assert post.call_args_list[0][0][1]["issueLinks"] == ["JQA-123"]
 
         # Test that optional fields are not send if not set
         with patch("adaptavist.Adaptavist._post") as post:
             adaptavist.create_test_result(test_run_key="JQA-R123", test_case_key="JQA-T123", status=STATUS_PASS)
-            assert not hasattr(post.call_args.args[1], "executionTime")
-            assert not hasattr(post.call_args.args[1], "issueLinks")
+            assert not hasattr(post.call_args_list[0][0][1], "executionTime")
+            assert not hasattr(post.call_args_list[0][0][1], "issueLinks")
 
     def test_edit_test_result_status(self, requests_mock):
         """Test creating a test result."""
@@ -428,8 +428,8 @@ class TestAdaptavist:
         # Test that executor and assignee are submitted as null if empty string is given
         with patch("adaptavist.Adaptavist._put") as put:
             adaptavist.edit_test_result_status(test_run_key="JQA-R123", test_case_key="JQA-T123", status=STATUS_FAIL, assignee="", executor="")
-            assert put.call_args.args[1]["assignedTo"] is None
-            assert put.call_args.args[1]["executedBy"] is None
+            assert put.call_args_list[0][0][1]["assignedTo"] is None
+            assert put.call_args_list[0][0][1]["executedBy"] is None
 
         # Test that optional fields are send if set
         with patch("adaptavist.Adaptavist._put") as put:
@@ -440,18 +440,18 @@ class TestAdaptavist:
                                                comment="Test",
                                                execute_time=3,
                                                issue_links=["JQA-123"])
-            assert put.call_args.args[1]["environment"] == "Firefox"
-            assert put.call_args.args[1]["comment"] == "Test"
-            assert put.call_args.args[1]["executionTime"] == 3000
-            assert put.call_args.args[1]["issueLinks"] == ["JQA-123"]
+            assert put.call_args_list[0][0][1]["environment"] == "Firefox"
+            assert put.call_args_list[0][0][1]["comment"] == "Test"
+            assert put.call_args_list[0][0][1]["executionTime"] == 3000
+            assert put.call_args_list[0][0][1]["issueLinks"] == ["JQA-123"]
 
         # Test that optional fields are not send if not set
         with patch("adaptavist.Adaptavist._put") as put:
             adaptavist.edit_test_result_status(test_run_key="JQA-R123", test_case_key="JQA-T123", status=STATUS_PASS)
-            assert not hasattr(put.call_args.args[1], "environment")
-            assert not hasattr(put.call_args.args[1], "comment")
-            assert not hasattr(put.call_args.args[1], "executionTime")
-            assert not hasattr(put.call_args.args[1], "issueLinks")
+            assert not hasattr(put.call_args_list[0][0][1], "environment")
+            assert not hasattr(put.call_args_list[0][0][1], "comment")
+            assert not hasattr(put.call_args_list[0][0][1], "executionTime")
+            assert not hasattr(put.call_args_list[0][0][1], "issueLinks")
 
     def test_add_test_result_attachment(self):
         """Test adding an attachment."""
@@ -493,8 +493,8 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123, "status": STATUS_FAIL}), \
              patch("adaptavist.Adaptavist._put") as put:
             adaptavist.edit_test_script_status(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1, status=STATUS_PASS, assignee="", executor="")
-            assert put.call_args.args[1]["assignedTo"] is None
-            assert put.call_args.args[1]["executedBy"] is None
+            assert put.call_args_list[0][0][1]["assignedTo"] is None
+            assert put.call_args_list[0][0][1]["executedBy"] is None
 
         # Test that optional fields are send if set
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123, "status": STATUS_FAIL}), \
@@ -506,17 +506,17 @@ class TestAdaptavist:
                                                environment="Firefox",
                                                assignee="Testuser",
                                                executor="Testuser")
-            assert put.call_args.args[1]["environment"] == "Firefox"
-            assert put.call_args.args[1]["assignedTo"] == "Testuser"
-            assert put.call_args.args[1]["executedBy"] == "Testuser"
+            assert put.call_args_list[0][0][1]["environment"] == "Firefox"
+            assert put.call_args_list[0][0][1]["assignedTo"] == "Testuser"
+            assert put.call_args_list[0][0][1]["executedBy"] == "Testuser"
 
         # Test that optional fields are not send if not set
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123, "status": STATUS_FAIL}), \
              patch("adaptavist.Adaptavist._put") as put:
             adaptavist.edit_test_script_status(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1, status=STATUS_PASS)
-            assert not hasattr(put.call_args.args[1], "environment")
-            assert not hasattr(put.call_args.args[1], "assignedTo")
-            assert not hasattr(put.call_args.args[1], "executedBy")
+            assert not hasattr(put.call_args_list[0][0][1], "environment")
+            assert not hasattr(put.call_args_list[0][0][1], "assignedTo")
+            assert not hasattr(put.call_args_list[0][0][1], "executedBy")
 
     def test_add_test_script_attachment(self):
         """Test adding an attachment."""
