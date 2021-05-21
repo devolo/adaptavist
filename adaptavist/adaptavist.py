@@ -9,7 +9,7 @@ import requests
 import requests_toolbelt
 
 from ._helper import build_folder_names, get_executor, update_field, update_multiline_field
-from .const import STATUS_APPROVED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
+from .const import PRIORITY_NORMAL, STATUS_APPROVED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
 
 
 class Adaptavist():
@@ -158,16 +158,14 @@ class Adaptavist():
         request = self._get(request_url)
         return {} if not request else request.json()
 
-    def get_test_cases(self, search_mask: str = "") -> List[Dict[str, Any]]:
+    def get_test_cases(self, search_mask: str = "folder <= \"/\"") -> List[Dict[str, Any]]:
         """
         Get a list of test cases matching the search mask.
+        Unfortunately, /testcase/search does not support empty query, so we use a basic filter here to get all test cases, if no search mask is given.
 
         :param search_mask: Search mask to match test cases
         :returns: List of test cases
         """
-        # unfortunately, /testcase/search does not support empty query, so we use a basic filter here to get all test cases
-        search_mask = search_mask or "folder <= \"/\""
-
         test_cases: List = []
         i = 0
         while True:
@@ -202,7 +200,7 @@ class Adaptavist():
         folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")  # Folders always need to start with /
         objective: str = kwargs.pop("objective", "")
         precondition: str = kwargs.pop("precondition", "")
-        priority: str = kwargs.pop("priority", "")
+        priority: str = kwargs.pop("priority", PRIORITY_NORMAL)
         estimated_time: int = kwargs.pop("estimated_time", 0) * 1000  # We actually need it in milliseconds
         status: str = kwargs.pop("status", STATUS_APPROVED)
         labels: List[str] = kwargs.pop("labels", [])
@@ -387,16 +385,14 @@ class Adaptavist():
         request = self._get(request_url)
         return {} if not request else request.json()
 
-    def get_test_plans(self, search_mask: str = "") -> List[Dict[str, Any]]:
+    def get_test_plans(self, search_mask: str = "folder <= \"/\"") -> List[Dict[str, Any]]:
         """
         Get a list of test plans matching the search mask.
+        Unfortunately, /testplan/search does not support empty query, so we use a basic filter here to get all test plans, if no search mask is given.
 
         :param search_mask: Search mask to match test plans
         :returns: List of test plans
         """
-        # unfortunately, /testplan/search does not support empty query, so we use a basic filter here to get all test plans
-        search_mask = search_mask or "folder <= \"/\""
-
         test_plans: List = []
         i = 0
         while True:
@@ -525,8 +521,8 @@ class Adaptavist():
         """
         test_runs: List = []
         i = 0
+        search_mask = quote_plus(f"testRun.name = \"{test_run_name}\"")
         while True:
-            search_mask = quote_plus(f"testRun.name = \"{test_run_name}\"")
             request_url = f"{self.jira_server}/rest/tests/1.0/testrun/search?startAt={i}&maxResults=10000&query={search_mask}&fields=id,key,name"
             self._logger.debug("Asking for 10000 test runs starting at %i", i + 1)
             request = self._get(request_url)
@@ -537,9 +533,10 @@ class Adaptavist():
             i += len(results)
         return {key: test_runs[-1][key] for key in ["key", "name"]} if test_runs else {}
 
-    def get_test_runs(self, search_mask: str = "", **kwargs) -> List[Dict[str, Any]]:
+    def get_test_runs(self, search_mask: str = "folder = \"/\"", **kwargs) -> List[Dict[str, Any]]:
         """
         Get a list of test runs matching the search mask.
+        Unfortunately, /testrun/search does not support empty query, so we use a basic filter here to get all test runs, if no search mask is given.
 
         :param search_mask: Search mask to match test runs
         :key fields: Comma-separated list of fields to be included (e.g. key, name, items)
@@ -551,11 +548,6 @@ class Adaptavist():
         fields: str = kwargs.pop("fields", "")
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
-
-        # unfortunately, /testrun/search does not support empty query, so we use a basic filter here to get all test runs
-        # while '<=' is supported by /testcase/search and /testplan/search it is not supported by /testrun/search (leads to http error)
-        if not search_mask:
-            search_mask = "folder = \"/\""
 
         test_runs: List = []
         i = 0
