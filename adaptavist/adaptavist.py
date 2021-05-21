@@ -79,12 +79,13 @@ class Adaptavist():
 
         :param project_key: Project key of the environment ex. "TEST"
         :param environment_name: Name of the environment to be created
-        :param description: Description of the environment
+        :key description: Description of the environment
         :return: id of the environment created
         """
         description: str = kwargs.pop("description", "")
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
+
         request_url = f"{self._adaptavist_api_url}/environments"
         self._logger.debug("Creating environment '%s' in project '%s'", environment_name, project_key)
         request_data = {
@@ -727,7 +728,7 @@ class Adaptavist():
             data = {key: value for key, value in result.items()}
             data["assignedTo"] = assignee or None  # The API uses null for unassigned
             data["executedBy"] = executor or None  # The API uses null for unassigned
-            data["environment"] = environment or None  # The API uses null for unassigned
+            data["environment"] = environment or None
             request_data.append(data)
 
         if not request_data:
