@@ -79,7 +79,7 @@ class Adaptavist():
 
         :param project_key: Project key of the environment ex. "TEST"
         :param environment_name: Name of the environment to be created
-        :param description: Description of the environment
+        :key description: Description of the environment
         :return: id of the environment created
         """
         description: str = kwargs.pop("description", "")
