@@ -73,7 +73,7 @@ class Adaptavist():
         request = self._get(request_url)
         return request.json() if request else []
 
-    def create_environment(self, project_key: str, environment_name: str, description: str) -> Optional[int]:
+    def create_environment(self, project_key: str, environment_name: str, description: str = "") -> Optional[int]:
         """
         Create a new environment.
 
