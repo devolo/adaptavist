@@ -1,5 +1,9 @@
 """Constants used by the module."""
 
+PRIORITY_HIGH = "High"
+PRIORITY_LOW = "Low"
+PRIORITY_NORMAL = "Normal"
+
 STATUS_APPROVED = "Approved"
 STATUS_BLOCKED = "Blocked"
 STATUS_DEPRECATED = "Deprecated"
