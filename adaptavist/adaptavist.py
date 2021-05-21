@@ -43,7 +43,7 @@ class Adaptavist():
             request_url = f"{self.jira_server}/rest/api/2/user/search?username=.&startAt={i}&maxResults=200"
             self._logger.debug("Asking for 200 users starting at %i", i + 1)
             request = self._get(request_url)
-            result = [] if not request else request.json()
+            result = request.json() if request else []
             if not result:
                 break
             users = [*users, *result]
@@ -73,15 +73,18 @@ class Adaptavist():
         request = self._get(request_url)
         return request.json() if request else []
 
-    def create_environment(self, project_key: str, environment_name: str, description: str = "") -> Optional[int]:
+    def create_environment(self, project_key: str, environment_name: str, **kwargs) -> Optional[int]:
         """
         Create a new environment.
 
         :param project_key: Project key of the environment ex. "TEST"
         :param environment_name: Name of the environment to be created
-        :key description: Description of the environment
+        :param description: Description of the environment
         :return: id of the environment created
         """
+        description: str = kwargs.pop("description", "")
+        if kwargs:
+            raise SyntaxWarning("Unknown arguments: %r", kwargs)
         request_url = f"{self._adaptavist_api_url}/environments"
         self._logger.debug("Creating environment '%s' in project '%s'", environment_name, project_key)
         request_data = {
@@ -132,10 +135,7 @@ class Adaptavist():
         }
         self._logger.debug("Creating folder '%s' (%s) in project '%s'", folder_name, folder_type, project_key)
         request = self._post(request_url, request_data)
-        if not request:
-            return None
-        response = request.json()
-        return response["id"]
+        return request.json()["id"] if request else None
 
     def get_test_case(self, test_case_key: str) -> Dict[str, Any]:
         """
@@ -147,7 +147,7 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
         self._logger.debug("Getting tets case '%s')", test_case_key)
         request = self._get(request_url)
-        return {} if not request else request.json()
+        return request.json() if request else {}
 
     def get_test_cases(self, search_mask: str = "folder <= \"/\"") -> List[Dict[str, Any]]:
         """
@@ -220,10 +220,7 @@ class Adaptavist():
         }
         self._logger.debug("Creating test case %s", project_key)
         request = self._post(request_url, request_data)
-        if not request:
-            return None
-        response = request.json()
-        return response["key"]
+        return request.json()["key"] if request else None
 
     def edit_test_case(self, test_case_key: str, **kwargs) -> bool:
         """
@@ -308,7 +305,7 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/issuelink/{issue_key}/testcases"
         self._logger.debug("Getting list of issues linked to %s", issue_key)
         request = self._get(request_url)
-        return [] if not request else request.json()
+        return request.json() if request else []
 
     def link_test_cases(self, issue_key: str, test_case_keys: List[str]) -> bool:
         """
@@ -374,7 +371,7 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testplan/{test_plan_key}"
         self._logger.debug("Getting test plan %s", test_plan_key)
         request = self._get(request_url)
-        return {} if not request else request.json()
+        return request.json() if request else {}
 
     def get_test_plans(self, search_mask: str = "folder <= \"/\"") -> List[Dict[str, Any]]:
         """
@@ -390,7 +387,7 @@ class Adaptavist():
             request_url = f"{self._adaptavist_api_url}/testplan/search?query={quote_plus(search_mask)}&startAt={i}"
             self._logger.debug("Asking for test plans with search mask '%s' starting at %i", search_mask, i + 1)
             request = self._get(request_url)
-            result = [] if not request else request.json()
+            result = request.json() if request else []
             if not result:
                 break
             test_plans = [*test_plans, *result]
@@ -436,10 +433,7 @@ class Adaptavist():
 
         self._logger.debug("Creating test plan %s in project %s", test_plan_name, project_key)
         request = self._post(request_url, request_data)
-        if request:
-            response = request.json()
-            return response["key"]
-        return None
+        return request.json()["key"] if request else None
 
     def edit_test_plan(self, test_plan_key: str, **kwargs) -> bool:
         """
@@ -499,7 +493,7 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}"
         self._logger.debug("Getting test run %s", test_run_key)
         request = self._get(request_url)
-        return {} if not request else request.json()
+        return request.json() if request else {}
 
     def get_test_run_by_name(self, test_run_name: str) -> Dict[str, Any]:
         """
@@ -605,10 +599,7 @@ class Adaptavist():
         }
         self._logger.debug("Creating new test run in project %s with name '%s'", test_plan_key, test_run_name)
         request = self._post(request_url, request_data)
-        if request:
-            response = request.json()
-            return response["key"]
-        return None
+        return request.json()["key"] if request else None
 
     def clone_test_run(self, test_run_key: str, test_run_name: str = "", **kwargs) -> Optional[str]:
         """
@@ -702,7 +693,7 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testresults"
         self._logger.debug("Getting all test results for run %s", test_run_key)
         request = self._get(request_url)
-        return [] if not request else request.json()
+        return request.json() if request else []
 
     def create_test_results(self, test_run_key: str, results: List[Dict[str, Any]], exclude_existing_test_cases: bool = True, **kwargs) -> List[int]:
         """
@@ -806,10 +797,7 @@ class Adaptavist():
 
         self._logger.debug("Creating test result for %s in %s", test_case_key, test_run_key)
         request = self._post(request_url, request_data)
-        if not request:
-            return None
-        response = request.json()
-        return response["id"]
+        return request.json()["id"] if request else None
 
     def edit_test_result_status(self, test_run_key: str, test_case_key: str, status: str, **kwargs) -> bool:
         """
