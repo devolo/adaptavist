@@ -117,8 +117,7 @@ class Adaptavist():
         request_url = f"{self.jira_server}/rest/tests/1.0/project/{project_id}/foldertree/{folder_type.replace('_', '').lower()}?startAt=0&maxResults=200"
         self._logger.debug("Getting folders in project '%s'", project_key)
         request = self._get(request_url)
-        response = [] if not request else request.json()
-        return build_folder_names(response)
+        return build_folder_names(request.json()) if request else []
 
     def create_folder(self, project_key: str, folder_type: str, folder_name: str) -> Optional[int]:
         """
@@ -224,7 +223,7 @@ class Adaptavist():
             "labels": labels,
             "issueLinks": issue_links,
             "testScript": {
-                "type": STEP_TYPE_BY_STEP, "steps": json.dumps(steps)
+                "type": STEP_TYPE_BY_STEP, "steps": steps
             },
         }
         self._logger.debug("Creating test case %s", project_key)
@@ -584,8 +583,6 @@ class Adaptavist():
         :key test_plan_key: Test plan key to link this test run to
         :key test_cases: List of test case keys to be linked to the test run ex. ["TEST-T1026","TEST-T1027"]
         :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
-        :key assignee: Assignee of the test case. Use "" for unassigned, None to determine automatically
-        :key executor: Executer of the test case. Use "" for unassigned, None to determine automatically
         :return: Key of the test run created
         """
         folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")
@@ -593,31 +590,25 @@ class Adaptavist():
         test_plan_key: str = kwargs.pop("test_plan_key", "")
         test_cases: List[str] = kwargs.pop("test_cases", [])
         environment: str = kwargs.pop("environment", "")
-        assignee: Optional[str] = kwargs.pop("assignee", None)
-        executor: Optional[str] = kwargs.pop("executor", None)
         if kwargs:
             raise SyntaxWarning("Unknown arguments: %r", kwargs)
 
         self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
-        assignee = get_executor() if assignee is None else assignee
-        executor = get_executor() if executor is None else executor
         test_cases_list_of_dicts = [
             {
                 "testCaseKey": test_case_key,
-                "environment": environment,
-                "assignedTo": assignee or None,  # The API uses null for unassigned
-                "executedBy": executor or None,  # The API uses null for unassigned
+                "environment": environment or None,
             } for test_case_key in test_cases
         ]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
         request_data = {
             "projectKey": project_key,
-            "testPlanKey": test_plan_key,
+            "testPlanKey": test_plan_key or None,
             "name": test_run_name,
             "folder": None if folder == "/" else folder,  # The API uses null for the root folder
-            "issueKey": issue_key,
+            "issueKey": issue_key or None,
             "items": test_cases_list_of_dicts,
         }
         self._logger.debug("Creating new test run in project %s with name '%s'", test_plan_key, test_run_name)
@@ -654,14 +645,14 @@ class Adaptavist():
         key = self.create_test_run(
             project_key=project_key or test_run["projectKey"],
             test_run_name=test_run_name or f"{test_run['name']} (cloned from {test_run['key']})",
-            folder=folder or test_run["folder"],
-            issue_key=test_run["issueKey"],
+            folder=folder or test_run.get("folder"),
+            issue_key=test_run.get("issueKey"),
             test_plan_key=test_plan_key,  # will be handled further below
             environment=environment or (test_run_items[0].get("environment", "") if test_run_items else ""),
             test_cases=[item["testCaseKey"] for item in test_run_items])
 
         # get test plans that contain the original test run and add cloned test run to them
-        if not test_plan_key:
+        if key and not test_plan_key:
             for test_plan in self.get_test_plans():
                 test_runs: List[Dict[str, Any]] = test_plan.get("testRuns", [])
                 if test_run["key"] in [item["key"] for item in test_runs]:
@@ -753,7 +744,7 @@ class Adaptavist():
             data = {key: value for key, value in result.items()}
             data["assignedTo"] = assignee or None  # The API uses null for unassigned
             data["executedBy"] = executor or None  # The API uses null for unassigned
-            data["environment"] = environment
+            data["environment"] = environment or None  # The API uses null for unassigned
             request_data.append(data)
 
         if not request_data:
@@ -811,8 +802,8 @@ class Adaptavist():
         executor = get_executor() if executor is None else executor
         request_data: Dict[str, Any] = {
             "comment": comment,
-            "environment": environment,
-            "assignedTo": executor or None,  # The API uses null for unassigned
+            "environment": environment or None,
+            "assignedTo": assignee or None,  # The API uses null for unassigned
             "executedBy": executor or None,  # The API uses null for unassigned
             "status": status,
         }
@@ -914,7 +905,7 @@ class Adaptavist():
 
         for script_result in script_results:
             # keep relevant fields only (to make PUT pass)
-            for key in script_result.keys():
+            for key in list(script_result):
                 if key not in ["index", "status", "comment"]:
                     script_result.pop(key)
 

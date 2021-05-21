@@ -306,21 +306,6 @@ class TestAdaptavist:
             adaptavist.create_test_run(project_key="JQA", test_run_name="Plan for a new version")
             assert post.call_args_list[0][0][1]['folder'] is None
 
-        # Test that executor and assignee are submitted as null if empty string is given
-        with patch("adaptavist.Adaptavist.create_folder"), \
-             patch("adaptavist.Adaptavist._post") as post:
-            adaptavist.create_test_run(project_key="JQA", test_run_name="Run for a new version", test_cases=["JQA-T123"], assignee="", executor="")
-            assert post.call_args_list[0][0][1]['items'][0]['assignedTo'] is None
-            assert post.call_args_list[0][0][1]['items'][0]['executedBy'] is None
-
-        # Test that executor and assignee are determinded if not given
-        with patch("adaptavist.Adaptavist.create_folder"), \
-             patch("adaptavist.Adaptavist._post") as post, \
-             patch("getpass.getuser", return_value="Testuser"):
-            adaptavist.create_test_run(project_key="JQA", test_run_name="Run for a new version", test_cases=["JQA-T123"])
-            assert post.call_args_list[0][0][1]['items'][0]['assignedTo'] == "testuser"
-            assert post.call_args_list[0][0][1]['items'][0]['executedBy'] == "testuser"
-
     def test_clone_test_run(self):
         """Test cloning an existing test run."""
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
