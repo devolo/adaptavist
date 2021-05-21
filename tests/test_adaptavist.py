@@ -38,16 +38,16 @@ class TestAdaptavist:
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/environments?projectKey=JQA", text=load_fixture("get_environments.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
-        envirenment = adaptavist.get_environments(project_key="JQA")
-        assert envirenment[0]["id"] == 100
+        environment = adaptavist.get_environments(project_key="JQA")
+        assert environment[0]["id"] == 100
 
     def test_create_environment(self, requests_mock):
         """Test creating an environment for a project."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/environments", text=load_fixture("create_environment.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
-        envirenment = adaptavist.create_environment(project_key="TEST", environment_name="Test environment", description="Cool new environment for testing.")
-        assert envirenment == 37
+        environment = adaptavist.create_environment(project_key="TEST", environment_name="Test environment", description="Cool new environment for testing.")
+        assert environment == 37
 
     def test_get_folders(self, requests_mock):
         """Test getting all folders of a project."""
@@ -68,7 +68,7 @@ class TestAdaptavist:
             folders = adaptavist.create_folder(project_key="TEST", folder_type="TEST_CASE", folder_name="Test folder")
             assert folders == 123
 
-        # Test that exisiting folders are not created twice
+        # Test that existing folders are not created twice
         with patch("adaptavist.Adaptavist.get_folders", return_value=["/", "/Test folder"]):
             assert adaptavist.create_folder(project_key="TEST", folder_type="TEST_CASE", folder_name="Test folder") is None
 

@@ -52,7 +52,7 @@ class Adaptavist():
 
     def get_projects(self) -> List[Dict[str, Any]]:
         """
-        Get a list of projects known to Adatavist/Jira.
+        Get a list of projects known to Adaptavist/Jira.
 
         :returns: List of projects
         """
@@ -70,7 +70,7 @@ class Adaptavist():
         :returns: List of environments
         """
         request_url = f"{self._adaptavist_api_url}/environments?projectKey={quote_plus(project_key)}"
-        self._logger.debug("Asking enviroments in project '%s'.", project_key)
+        self._logger.debug("Asking environments in project '%s'.", project_key)
         request = self._get(request_url)
         return [] if not request else request.json()
 
@@ -993,7 +993,7 @@ class Adaptavist():
         return request
 
     def _upload_file(self, request_url: str, attachment: BinaryIO, filename: str) -> bool:
-        """Updoad file to Adaptavist."""
+        """Upload file to Adaptavist."""
         stream = requests_toolbelt.MultipartEncoder(fields={"file": (filename, attachment, "application/octet-stream")})
         headers = {**self._headers}
         headers["Content-type"] = stream.content_type
@@ -1009,7 +1009,7 @@ class Adaptavist():
         return True
 
     def _upload_file_by_name(self, request_url: str, attachment: str, filename: str) -> bool:
-        """Updoad file by filename to Adaptavist."""
+        """Upload file by filename to Adaptavist."""
         if not filename:
             raise SyntaxError("No filename given.")
         try:
