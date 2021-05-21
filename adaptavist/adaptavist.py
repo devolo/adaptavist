@@ -59,8 +59,7 @@ class Adaptavist():
         request_url = f"{self.jira_server}/rest/tests/1.0/project"
         self._logger.debug("Asking for product list.")
         request = self._get(request_url)
-        response = [] if not request else request.json()
-        return [{"id": project["id"], "key": project["key"], "name": project["name"]} for project in response]
+        return [{"id": project["id"], "key": project["key"], "name": project["name"]} for project in request.json()] if request else []
 
     def get_environments(self, project_key: str) -> List[Dict[str, Any]]:
         """
