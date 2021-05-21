@@ -71,9 +71,9 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/environments?projectKey={quote_plus(project_key)}"
         self._logger.debug("Asking environments in project '%s'.", project_key)
         request = self._get(request_url)
-        return [] if not request else request.json()
+        return request.json() if request else []
 
-    def create_environment(self, project_key: str, environment_name: str, **kwargs) -> Optional[int]:
+    def create_environment(self, project_key: str, environment_name: str, description: str) -> Optional[int]:
         """
         Create a new environment.
 
@@ -82,10 +82,6 @@ class Adaptavist():
         :key description: Description of the environment
         :return: id of the environment created
         """
-        description: str = kwargs.pop("description", "")
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
-
         request_url = f"{self._adaptavist_api_url}/environments"
         self._logger.debug("Creating environment '%s' in project '%s'", environment_name, project_key)
         request_data = {
@@ -95,10 +91,7 @@ class Adaptavist():
         }
 
         request = self._post(request_url, request_data)
-        if request:
-            response = request.json()
-            return response["id"]
-        return None
+        return request.json()["id"] if request else None
 
     def get_folders(self, project_key: str, folder_type: str) -> List[str]:
         """
