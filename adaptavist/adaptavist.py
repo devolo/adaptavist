@@ -728,10 +728,8 @@ class Adaptavist():
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testresults"
         self._logger.debug("Creating test results for run %s", test_run_key)
         request = self._post(request_url, request_data)
-        if not request:
-            return []
 
-        return [result["id"] for result in request.json()]
+        return [result["id"] for result in request.json()] if request else []
 
     def get_test_result(self, test_run_key: str, test_case_key: str) -> Dict[str, Any]:
         """
