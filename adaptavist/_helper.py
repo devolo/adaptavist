@@ -45,7 +45,7 @@ def update_field(current_values: List[Any], request_data: Dict[str, Any], key: s
 
 
 def update_multiline_field(current_content: str, request_data: Dict[str, Any], key: str, new_values: List[str]) -> None:
-    """Update a multine custom field (html) with additional or new values."""
+    """Update a multiline custom field (html) with additional or new values."""
     new_content = "" if new_values and new_values[0] == "-" else current_content
     if new_values and new_values[0] == "-":
         new_values = new_values[1:]
