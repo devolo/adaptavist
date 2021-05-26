@@ -327,10 +327,7 @@ class Adaptavist():
             if issue_key not in issue_links:
                 issue_links.append(issue_key)
 
-                request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
-                request_data = {"issueLinks": issue_links}
-                self._logger.debug("Updating test case %s", test_case_key)
-                if not self._put(request_url, request_data):
+                if not self._updating(test_case_key, issue_links):
                     return False
 
         return True
@@ -354,13 +351,16 @@ class Adaptavist():
             if issue_key in issue_links:
                 issue_links.remove(issue_key)
 
-                request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
-                request_data = {"issueLinks": issue_links}
-                self._logger.debug("Updating test case %s", test_case_key)
-                if not self._put(request_url, request_data):
+                if not self._updating(test_case_key, issue_links):
                     return False
 
         return True
+
+    def _updating(self, test_case_key, issue_links):  # Todo: find a better naming
+        request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
+        request_data = {"issueLinks": issue_links}
+        self._logger.debug("Updating test case %s", test_case_key)
+        return bool(self._put(request_url, request_data))
 
     def get_test_plan(self, test_plan_key: str) -> Dict[str, Any]:
         """
