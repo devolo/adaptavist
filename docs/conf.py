@@ -52,7 +52,7 @@ exclude_patterns = ["_build", "README.md"]
 #
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
-    "gitlab_url": metadata.metadata(PACKAGE_NAME)["home-page"],
+    "github_url": metadata.metadata(PACKAGE_NAME)["home-page"],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
