@@ -8,7 +8,7 @@ from urllib.parse import quote_plus
 import requests
 import requests_toolbelt
 
-from ._helper import build_folder_names, get_executor, update_field, update_multiline_field
+from ._helper import build_folder_names, get_executor, raise_on_kwargs_not_empty, update_field, update_multiline_field
 from .const import PRIORITY_NORMAL, STATUS_APPROVED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
 
 
@@ -83,8 +83,7 @@ class Adaptavist():
         :return: id of the environment created
         """
         description: str = kwargs.pop("description", "")
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         request_url = f"{self._adaptavist_api_url}/environments"
         self._logger.debug("Creating environment '%s' in project '%s'", environment_name, project_key)
@@ -198,8 +197,7 @@ class Adaptavist():
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         steps: List[Dict[str, Any]] = kwargs.pop("steps", [])
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         self.create_folder(project_key=project_key, folder_type=TEST_CASE, folder_name=folder)
 
@@ -252,8 +250,7 @@ class Adaptavist():
         issue_links: List[str] = kwargs.pop("issue_links", [])
         build_urls: List[str] = kwargs.pop("build_urls", [])
         code_bases: List[str] = kwargs.pop("code_bases", [])
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         response = self.get_test_case(test_case_key)
         if not response:
@@ -415,8 +412,7 @@ class Adaptavist():
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         test_runs: List[str] = kwargs.pop("test_runs", [])
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         self.create_folder(project_key=project_key, folder_type=TEST_PLAN, folder_name=folder)
 
@@ -457,8 +453,7 @@ class Adaptavist():
         labels: List[str] = kwargs.pop("labels", [])
         issue_links: List[str] = kwargs.pop("issue_links", [])
         test_runs: List[str] = kwargs.pop("test_runs", [])
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         response = self.get_test_plan(test_plan_key)
         if not response:
@@ -532,8 +527,7 @@ class Adaptavist():
         :returns: List of test runs
         """
         fields: str = kwargs.pop("fields", "")
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         test_runs: List = []
         i = 0
@@ -577,8 +571,7 @@ class Adaptavist():
         test_plan_key: str = kwargs.pop("test_plan_key", "")
         test_cases: List[str] = kwargs.pop("test_cases", [])
         environment: str = kwargs.pop("environment", "")
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
@@ -617,8 +610,7 @@ class Adaptavist():
         test_plan_key: str = kwargs.pop("test_plan_key", "")
         project_key: str = kwargs.pop("project_key", "")
         environment: str = kwargs.pop("environment", "")
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         test_run = self.get_test_run(test_run_key)
         if not test_run:
@@ -712,8 +704,7 @@ class Adaptavist():
         environment: str = kwargs.pop("environment", "")
         assignee: Optional[str] = kwargs.pop("assignee", None)
         executor: Optional[str] = kwargs.pop("executor", None)
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         test_run = self.get_test_run(test_run_key)
         if not test_run:
@@ -777,8 +768,7 @@ class Adaptavist():
         assignee: Optional[str] = kwargs.pop("assignee", None)
         executor: Optional[str] = kwargs.pop("executor", None)
         issue_links: List[str] = kwargs.pop("issue_links", [])
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
 
@@ -821,8 +811,7 @@ class Adaptavist():
         assignee: Optional[str] = kwargs.pop("assignee", None)
         executor: Optional[str] = kwargs.pop("executor", None)
         issue_links: Optional[List[str]] = kwargs.pop("issue_links", None)
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
         request_data: Dict[str, Any] = {
@@ -876,8 +865,7 @@ class Adaptavist():
         environment: Optional[str] = kwargs.pop("environment", None)
         assignee: Optional[str] = kwargs.pop("assignee", None)
         executor: Optional[str] = kwargs.pop("executor", None)
-        if kwargs:
-            raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise_on_kwargs_not_empty(kwargs)
 
         test_result = self.get_test_result(test_run_key, test_case_key)
         script_results = test_result.get("scriptResults", [])

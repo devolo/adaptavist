@@ -28,6 +28,11 @@ def build_folder_names(result: Dict[str, Any], folder_name: str = "") -> List[An
     return folders
 
 
+def raise_on_kwargs_not_empty(kwargs):
+    if kwargs:
+        raise SyntaxWarning("Unknown arguments: %r", kwargs)
+
+
 def update_field(current_values: List[Any], request_data: Dict[str, Any], key: str, new_values: List[Any]) -> None:
     """Append list entries to an existing list and add it to a dictionary, if the new list is different."""
     if new_values and new_values[0] == "-" and current_values != new_values[1:]:
