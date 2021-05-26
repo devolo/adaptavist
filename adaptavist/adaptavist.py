@@ -909,9 +909,7 @@ class Adaptavist():
         """
         test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
-        if isinstance(attachment, str):
-            return self._upload_file_by_name(request_url, attachment, filename)
-        return self._upload_file(request_url, attachment, filename)
+        return self._upload_file_by_name(request_url, attachment, filename) if isinstance(attachment, str) else self._upload_file(request_url, attachment, filename)
 
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""
