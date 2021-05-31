@@ -17,7 +17,6 @@ setup(
     extras_require={
         "test": ["pytest", "requests-mock"],
         "docs":[
-            "importlib-metadata;python_version<'3.8'",
             "m2r2",
             "pydata_sphinx_theme",
             "sphinx",
