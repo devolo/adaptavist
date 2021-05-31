@@ -7,8 +7,8 @@ setup(
     long_description_content_type="text/markdown",
     use_scm_version=True,
     url="https://github.com/devolo/adaptavist",
-    author="Stephan Steinberg, Guido Schmitz",
-    author_email="guido.schmitz@devolo.de",
+    author="Stephan Steinberg, Guido Schmitz, Markus Bong",
+    author_email="guido.schmitz@devolo.de, markus.bong@devolo.de",
     license="MIT",
     packages=["adaptavist"],
     platforms="any",
@@ -17,7 +17,6 @@ setup(
     extras_require={
         "test": ["pytest", "requests-mock"],
         "docs":[
-            "importlib-metadata;python_version<'3.8'",
             "m2r2",
             "pydata_sphinx_theme",
             "sphinx",
