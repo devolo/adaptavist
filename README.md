@@ -11,7 +11,7 @@ This python package provides functionality for Jira Test Management ([tm4j](http
 
 ## Installation
 
-To install adaptavist, you can use (one of) the following command(s):
+To install adaptavist, you can use the following command(s):
 
 ```bash
 python -m pip install adaptavist
