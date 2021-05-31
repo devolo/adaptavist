@@ -12,7 +12,7 @@ from ._helper import build_folder_names, get_executor, raise_on_kwargs_not_empty
 from .const import PRIORITY_NORMAL, STATUS_APPROVED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
 
 
-class Adaptavist():
+class Adaptavist:
     """
     The Adaptavist class.
     Uses REST API of Adaptavist Test Management for Jira Server to provide its functionality.
