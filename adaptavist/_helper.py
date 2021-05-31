@@ -29,8 +29,9 @@ def build_folder_names(result: Dict[str, Any], folder_name: str = "") -> List[An
 
 
 def raise_on_kwargs_not_empty(kwargs):
+    """Raise if there are more keyword arguments than understood."""
     if kwargs:
-        raise SyntaxWarning("Unknown arguments: %r", kwargs)
+        raise SyntaxWarning(f"Unknown arguments: {kwargs}")
 
 
 def update_field(current_values: List[Any], request_data: Dict[str, Any], key: str, new_values: List[Any]) -> None:
