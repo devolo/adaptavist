@@ -320,11 +320,14 @@ class Adaptavist():
                 continue
 
             # append issue to the current list of issue links
+            request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
             issue_links = response.get("issueLinks", [])
             if issue_key not in issue_links:
                 issue_links.append(issue_key)
 
-                if not self._updating(test_case_key, issue_links):
+                request_data = {"issueLinks": issue_links}
+                self._logger.debug("Adding links to test case %s", test_case_key)
+                if not self._put(request_url, request_data):
                     return False
 
         return True
@@ -344,20 +347,17 @@ class Adaptavist():
                 continue
 
             # remove issue from the current list of issue links
+            request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
             issue_links = response.get("issueLinks", [])
             if issue_key in issue_links:
                 issue_links.remove(issue_key)
 
-                if not self._updating(test_case_key, issue_links):
+                request_data = {"issueLinks": issue_links}
+                self._logger.debug("Removing links from test case %s", test_case_key)
+                if not self._put(request_url, request_data):
                     return False
 
         return True
-
-    def _updating(self, test_case_key, issue_links):  # Todo: find a better naming
-        request_url = f"{self._adaptavist_api_url}/testcase/{test_case_key}"
-        request_data = {"issueLinks": issue_links}
-        self._logger.debug("Updating test case %s", test_case_key)
-        return bool(self._put(request_url, request_data))
 
     def get_test_plan(self, test_plan_key: str) -> Dict[str, Any]:
         """
@@ -716,11 +716,10 @@ class Adaptavist():
         for result in results:
             if exclude_existing_test_cases and result["testCaseKey"] in [item["testCaseKey"] for item in test_run["items"]]:
                 continue
-            data = {key: value for key, value in result.items()}
-            data["assignedTo"] = assignee or None  # The API uses null for unassigned
-            data["executedBy"] = executor or None  # The API uses null for unassigned
-            data["environment"] = environment or None
-            request_data.append(data)
+            result["assignedTo"] = assignee or None  # The API uses null for unassigned
+            result["executedBy"] = executor or None  # The API uses null for unassigned
+            result["environment"] = environment or None
+            request_data.append(result)
 
         if not request_data:
             return []
@@ -843,7 +842,9 @@ class Adaptavist():
         """
         test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
-        return self._upload_file_by_name(request_url, attachment, filename) if isinstance(attachment, str) else self._upload_file(request_url, attachment, filename)
+        return self._upload_file_by_name(request_url, attachment, filename) \
+            if isinstance(attachment, str) \
+            else self._upload_file(request_url, attachment, filename)
 
     def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs) -> bool:
         """
@@ -907,7 +908,9 @@ class Adaptavist():
         """
         test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
-        return self._upload_file_by_name(request_url, attachment, filename) if isinstance(attachment, str) else self._upload_file(request_url, attachment, filename)
+        return self._upload_file_by_name(request_url, attachment, filename) \
+            if isinstance(attachment, str) \
+            else self._upload_file(request_url, attachment, filename)
 
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""
