@@ -1,0 +1,16 @@
+{
+    "projectId": 10000,
+    "itemCount": 1,
+    "children": [
+        {
+            "id": 2000,
+            "projectId": 10000,
+            "index": 1,
+            "name": "Test folder",
+            "itemCount": 1,
+            "children": [],
+            "createdBy": "testuser",
+            "createdOn": "2000-01-01T00:00:00.000Z"
+        }
+    ]
+}

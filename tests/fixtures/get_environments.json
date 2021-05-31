@@ -1,0 +1,14 @@
+[
+    {
+        "id": 100,
+        "projectKey": "JQA",
+        "name": "Firefox",
+        "description": ""
+    },
+    {
+        "id": 200,
+        "projectKey": "JQA",
+        "name": "Linux",
+        "description": "The description of the environment"
+    }
+]

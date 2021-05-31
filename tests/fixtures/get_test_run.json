@@ -1,0 +1,48 @@
+{
+    "executionResultsSummary": {
+        "Pass": 1,
+        "Fail": 1
+    },
+    "key": "JQA-R123",
+    "projectKey": "JQA",
+    "name": "Full regression",
+    "status": "Done",
+    "iteration": "Sprint 1",
+    "folder": "/root folder/child folder",
+    "version": "1.1.0",
+    "issueKey": "JQA-123",
+    "owner": "admin",
+    "plannedStartDate": "2016-02-24T08:10:59.514Z",
+    "plannedEndDate": "2016-02-26T12:00:00.000Z",
+    "estimatedTime": 2338000,
+    "executionTime": 150000,
+    "testCaseCount": 2,
+    "issueCount": 1,
+    "items": [
+        {
+            "id": 500020,
+            "testCaseKey": "JQA-T123",
+            "environment": "Chrome",
+            "userKey": "vitor.pelizza",
+            "executionDate": "2017-05-16T16:42:06.000Z",
+            "status": "Fail",
+            "executedBy": "vitor.pelizza",
+            "assignedTo": "cristiano.caetano",
+            "plannedStartDate": "2016-02-10T19:22:00-0300",
+            "plannedEndDate": "2016-02-12T19:22:00-0300",
+            "actualStartDate": "2016-02-12T19:22:00-0300",
+            "actualEndDate": "2016-02-14T19:22:00-0300",
+            "customFields": {
+                "single choice": "Propulsion engines",
+                "multichoice": "Brazil, England"
+            }
+        },
+        {
+            "id": 500021,
+            "testCaseKey": "JQA-T456",
+            "environment": "Firefox",
+            "executionDate": "2017-05-16T16:31:28.000Z",
+            "status": "Pass"
+        }
+    ]
+}

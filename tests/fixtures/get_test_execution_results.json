@@ -1,0 +1,32 @@
+{
+    "maxResults": 10000,
+    "startAt": 0,
+    "total": 100000,
+    "results": [
+        {
+            "id": 1,
+            "key": "JQA-E123",
+            "lastTestResult": true,
+            "estimatedTime": 60,
+            "automated": false,
+            "status": {
+                "name": "Not Executed",
+                "color": "#cfcfc4",
+                "i18nKey": "TEST_RESULT.STATUS.NOT_EXECUTED"
+            },
+            "testCase": {
+                "key": "JQA-T123",
+                "majorVersion": 1,
+                "name": "Ensure the axial-flow pump is enabled"
+            },
+            "testRun": {
+                "key": "JQA-R123",
+                "name": "Full regression"
+            },
+            "user": {},
+            "assignedToUser": {},
+            "environment": {},
+            "scenarioResultIds": []
+        }
+    ]
+}

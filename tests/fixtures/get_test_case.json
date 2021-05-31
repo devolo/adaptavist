@@ -1,0 +1,57 @@
+{
+    "key": "JQA-T123",
+    "projectKey": "JQA",
+    "name": "Ensure the axial-flow pump is enabled",
+    "precondition": "The precondition.",
+    "objective": "The objective.",
+    "folder": "/Orbiter/Cargo Bay",
+    "status": "Approved",
+    "priority": "Low",
+    "component": "Valves",
+    "owner": "vitor.pelizza",
+    "estimatedTime": 138000,
+    "labels": [
+        "Smoke",
+        "Functional"
+    ],
+    "issueLinks": [
+        "JQA-123",
+        "JQA-456"
+    ],
+    "customFields": {
+        "Automated": false
+    },
+    "parameters": {
+        "variables": [
+            {
+                "name": "Initial Pressure",
+                "type": "FREE_TEXT"
+            },
+            {
+                "name": "High Pressure",
+                "type": "FREE_TEXT"
+            }
+        ],
+        "entries": [
+            {
+                "Initial Pressure": "10",
+                "High Pressure": "3000"
+            },
+            {
+                "Initial Pressure": "20",
+                "High Pressure": "6000"
+            }
+        ]
+    },
+    "testScript": {
+        "type": "STEP_BY_STEP",
+        "steps": [
+            {
+                "index": 0,
+                "description": "Ignite the secondary propulsion engines.",
+                "testData": "Combustion chamber's initial pressure: <span class=\"atwho-inserted\">{Initial Pressure}</span>",
+                "expectedResult": "Ensure the high-pressure combustion chamber's pressure is around <span class=\"atwho-inserted\">{High Pressure}</span> psi."
+            }
+        ]
+    }
+}
