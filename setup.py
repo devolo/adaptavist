@@ -11,6 +11,7 @@ setup(
     author_email="guido.schmitz@devolo.de, markus.bong@devolo.de",
     license="MIT",
     packages=["adaptavist"],
+    package_data={"adaptavist": ["py.typed"]},
     platforms="any",
     python_requires=">=3.6",
     install_requires=["importlib-metadata;python_version<'3.8'", "pbr", "requests_toolbelt", "requests"],
