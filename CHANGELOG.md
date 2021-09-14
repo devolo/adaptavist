@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Mark package as typed
 
+## Fixed
+
+- Fixed uppercase-lowercase in constants
+
 ## [2.0.0] - 2021/05/31
 
 ### Added
