@@ -777,11 +777,8 @@ class Adaptavist:
             "assignedTo": assignee or None,  # The API uses null for unassigned
             "executedBy": executor or None,  # The API uses null for unassigned
             "status": status,
-        }
-        if execute_time is not None:
-            request_data["executionTime"] = execute_time * 1000
-        if issue_links:
-            request_data["issueLinks"] = issue_links
+            "executionTime": execute_time * 1000,
+            "issueLinks": issue_links}
 
         self._logger.debug("Creating test result for %s in %s", test_case_key, test_run_key)
         request = self._post(request_url, request_data)
@@ -813,19 +810,14 @@ class Adaptavist:
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
         request_data: Dict[str, Any] = {
             "status": status,
+            "environment": environment or None,
+            "assignedTo": assignee or None,
+            "executedBy": executor or None,
+            "comment": comment,
+            "executionTime": execute_time * 1000,
+            "issueLinks": issue_links
         }
-        if environment is not None:
-            request_data["environment"] = environment
-        if assignee is not None:
-            request_data["assignedTo"] = assignee or None
-        if executor is not None:
-            request_data["executedBy"] = executor or None
-        if comment is not None:
-            request_data["comment"] = comment
-        if execute_time is not None:
-            request_data["executionTime"] = execute_time * 1000
-        if issue_links is not None:
-            request_data["issueLinks"] = issue_links
+        
 
         self._logger.debug("Updating test result for %s in %s", test_case_key, test_run_key)
         return bool(self._put(request_url, request_data))
@@ -882,15 +874,12 @@ class Adaptavist:
 
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testcase/{test_case_key}/testresult"
         request_data = {
-            "status": test_result["status"],  # mandatory, to keep test result status unchanged
-            "scriptResults": script_results,
+            'status': test_result["status"],
+            'scriptResults': script_results,
+            'environment': environment or None,
+            'assignedTo': assignee or None,
+            'executedBy': executor or None,
         }
-        if environment is not None:
-            request_data["environment"] = environment
-        if assignee is not None:
-            request_data["assignedTo"] = assignee or None
-        if executor is not None:
-            request_data["executedBy"] = executor or None
 
         self._logger.debug("Updating test script for %s in %s", test_case_key, test_run_key)
         return bool(self._put(request_url, request_data))
