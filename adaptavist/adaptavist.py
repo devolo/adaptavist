@@ -157,7 +157,7 @@ class Adaptavist:
         :param search_mask: Search mask to match test cases
         :returns: List of test cases
         """
-        test_cases: List = []
+        test_cases: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self._adaptavist_api_url}/testcase/search?query={quote_plus(search_mask)}&startAt={i}"
@@ -529,7 +529,7 @@ class Adaptavist:
         fields: str = kwargs.pop("fields", "")
         raise_on_kwargs_not_empty(kwargs)
 
-        test_runs: List = []
+        test_runs: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self._adaptavist_api_url}/testrun/search?query={quote_plus(search_mask)}&startAt={i}&maxResults=1000&fields={quote_plus(fields)}"
@@ -591,7 +591,7 @@ class Adaptavist:
             "issueKey": issue_key or None,
             "items": test_cases_list_of_dicts,
         }
-        self._logger.debug("Creating new test run in project %s with name '%s'", test_plan_key, test_run_name)
+        self._logger.debug("Creating new test run in project %s with name '%s'", project_key, test_run_name)
         request = self._post(request_url, request_data)
         return request.json()["key"] if request else None
 
@@ -647,7 +647,7 @@ class Adaptavist:
                                  If false, returns all test results, i.e. even those ones that have been overwritten
         :returns: Test results
         """
-        test_results: List = []
+        test_results: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self.jira_server}/rest/tests/1.0/reports/testresults?startAt={i}&maxResults=10000"
