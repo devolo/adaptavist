@@ -9,7 +9,7 @@ import requests
 import requests_toolbelt
 
 from ._helper import build_folder_names, get_executor, raise_on_kwargs_not_empty, update_field, update_multiline_field
-from .const import PRIORITY_NORMAL, STATUS_APPROVED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
+from .const import PRIORITY_NORMAL, STATUS_APPROVED, STATUS_NOT_EXECUTED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
 
 
 class Adaptavist:
@@ -749,7 +749,7 @@ class Adaptavist:
                 return item
         return {}
 
-    def create_test_result(self, test_run_key: str, test_case_key: str, status: str = "", **kwargs) -> Optional[int]:
+    def create_test_result(self, test_run_key: str, test_case_key: str, status: str = STATUS_NOT_EXECUTED, **kwargs) -> Optional[int]:
         """
         Create a new test result for a given test run and test case with the given status.
 
