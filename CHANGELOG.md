@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Mark package as typed
 - Methods to get attachments
 
+### Changed
+
+- Test steps in test results are now sorted by index
+
 ## Fixed
 
 - Fixed uppercase-lowercase in constants

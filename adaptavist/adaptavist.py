@@ -686,7 +686,12 @@ class Adaptavist:
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testresults"
         self._logger.debug("Getting all test results for run %s", test_run_key)
         request = self._get(request_url)
-        return request.json() if request else []
+        if not request:
+            return []
+        results = request.json()
+        for result in results:
+            result["scriptResults"] = sorted(result["scriptResults"], key=lambda result: result["index"])
+        return results
 
     def create_test_results(self, test_run_key: str, results: List[Dict[str, Any]], exclude_existing_test_cases: bool = True, **kwargs) -> List[int]:
         """
