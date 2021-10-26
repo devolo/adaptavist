@@ -914,7 +914,7 @@ class Adaptavist:
 
         :param test_run_key: Test run key. ex. "JQA-R1234"
         :param test_case_key: Test case key. ex. "JQA-T1234"
-        :param step: Index (starting from 1) of step to be updated.
+        :param step: Index (starting from 1) of step to get the attachments from.
         :returns: Test script result attachments
         """
         test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
