@@ -830,6 +830,19 @@ class Adaptavist:
         self._logger.debug("Updating test result for %s in %s", test_case_key, test_run_key)
         return bool(self._put(request_url, request_data))
 
+    def get_test_result_attachment(self, test_run_key: str, test_case_key: str) -> List[Dict[str, Any]]:
+        """
+        Add attachment to a test result.
+
+        :param test_run_key: Test run key. ex. "JQA-R1234"
+        :param test_case_key: Test case key. ex. "JQA-T1234"
+        :returns: Test result attachments
+        """
+        test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
+        request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
+        request = self._get(request_url)
+        return request.json() if request else []
+
     def add_test_result_attachment(self, test_run_key: str, test_case_key: str, attachment: Union[str, BinaryIO], filename: str = "") -> bool:
         """
         Add attachment to a test result.
@@ -894,6 +907,20 @@ class Adaptavist:
 
         self._logger.debug("Updating test script for %s in %s", test_case_key, test_run_key)
         return bool(self._put(request_url, request_data))
+
+    def get_test_script_attachment(self, test_run_key: str, test_case_key: str, step: int) -> List[Dict[str, Any]]:
+        """
+        Get attachments of a test script result.
+
+        :param test_run_key: Test run key. ex. "JQA-R1234"
+        :param test_case_key: Test case key. ex. "JQA-T1234"
+        :param step: Index (starting from 1) of step to be updated.
+        :returns: Test script result attachments
+        """
+        test_result_id = self.get_test_result(test_run_key, test_case_key)['id']
+        request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/step/{step - 1}/attachments"
+        request = self._get(request_url)
+        return request.json() if request else []
 
     def add_test_script_attachment(self, test_run_key: str, test_case_key: str, step: int, attachment: Union[str, BinaryIO], filename: str = "") -> bool:
         """

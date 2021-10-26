@@ -1,0 +1,14 @@
+[
+    {
+      "id": 21,
+      "url": "http://yourdomain/jiracontext/rest/tests/1.0/attachment/21",
+      "filename": "Filename.pdf",
+      "filesize": 2096
+    },
+    {
+      "id": 22,
+      "url": "http://yourdomain/jiracontext/rest/tests/1.0/attachment/22",
+      "filename": "Image.jpg",
+      "filesize": 2120
+    }
+  ]
