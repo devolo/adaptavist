@@ -41,7 +41,7 @@ jobs:
         pylint --exit-zero --score=n --disable=C,E,R --enable=useless-suppression adaptavist
     - name: Lint with mypy
       run: |
-        python -m pip install mypy
+        python -m pip install mypy types-requests
         mypy --ignore-missing-imports adaptavist
 
   test:
