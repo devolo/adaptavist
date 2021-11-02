@@ -575,12 +575,10 @@ class Adaptavist:
 
         self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
-        test_cases_list_of_dicts = [
-            {
+        test_cases_list_of_dicts = [{
                 "testCaseKey": test_case_key,
                 "environment": environment or None,
-            } for test_case_key in test_cases
-        ]
+            } for test_case_key in test_cases]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
         request_data = {

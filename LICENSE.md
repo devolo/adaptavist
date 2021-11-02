@@ -1,4 +1,4 @@
-Copyright (c) 2019 Stephan Steinberg <stephan.steinberg@devolo.de>
+Copyright (c) 2019 devolo AG
 
 The MIT License
 

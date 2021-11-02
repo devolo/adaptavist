@@ -443,7 +443,7 @@ class TestAdaptavist:
         """Test getting test result attachments."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testresult/123/attachments", text=load_fixture("get_test_result_attachments.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
-        
+
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}):
             attachments = adaptavist.get_test_result_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123")
             assert len(attachments) == 2
@@ -517,7 +517,7 @@ class TestAdaptavist:
         """Test getting test script result attachments."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testresult/123/step/0/attachments", text=load_fixture("get_test_result_attachments.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
-        
+
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}):
             attachments = adaptavist.get_test_script_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1)
             assert len(attachments) == 2
