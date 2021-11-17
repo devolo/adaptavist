@@ -4,16 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.0] - 2021/11/17
 
-## Added
+### Added
 
 - Mark package as typed
 - Methods to get attachments
 
-## Fixed
+### Changed
+
+- Test steps in test results are now sorted by index
+
+### Fixed
 
 - Fixed uppercase-lowercase in constants
+- If a test case is created without dedicated status, it is set to "Not Executed" now
 
 ## [2.0.0] - 2021/05/31
 

@@ -4,6 +4,7 @@ from io import BytesIO
 from unittest.mock import mock_open, patch
 
 from pytest import raises
+from requests_mock import Mocker
 
 from adaptavist import Adaptavist
 from adaptavist.const import STATUS_FAIL, STATUS_PASS
@@ -16,7 +17,7 @@ class TestAdaptavist:
     _jira_url = "mock://jira"
     _adaptavist_api_url = f"{_jira_url}/rest/atm/1.0"
 
-    def test_get_users(self, requests_mock):
+    def test_get_users(self, requests_mock: Mocker):
         """Test getting all users."""
         requests_mock.get(f"{TestAdaptavist._jira_url}/rest/api/2/user/search?username=.&startAt=0&maxResults=200", text=load_fixture("get_users.json"))
         requests_mock.get(f"{TestAdaptavist._jira_url}/rest/api/2/user/search?username=.&startAt=1&maxResults=200", text="[]")
@@ -25,7 +26,7 @@ class TestAdaptavist:
         users = adaptavist.get_users()
         assert users == ["Testuser"]
 
-    def test_get_projects(self, requests_mock):
+    def test_get_projects(self, requests_mock: Mocker):
         """Test getting all projects."""
         requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/project", text=load_fixture("get_projects.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -33,7 +34,7 @@ class TestAdaptavist:
         projects = adaptavist.get_projects()
         assert projects[0]["id"] == 10000
 
-    def test_get_environments(self, requests_mock):
+    def test_get_environments(self, requests_mock: Mocker):
         """Test getting all environments of a project."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/environments?projectKey=JQA", text=load_fixture("get_environments.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -41,7 +42,7 @@ class TestAdaptavist:
         environment = adaptavist.get_environments(project_key="JQA")
         assert environment[0]["id"] == 100
 
-    def test_create_environment(self, requests_mock):
+    def test_create_environment(self, requests_mock: Mocker):
         """Test creating an environment for a project."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/environments", text=load_fixture("create_environment.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -49,7 +50,7 @@ class TestAdaptavist:
         environment = adaptavist.create_environment(project_key="TEST", environment_name="Test environment", description="Cool new environment for testing.")
         assert environment == 37
 
-    def test_get_folders(self, requests_mock):
+    def test_get_folders(self, requests_mock: Mocker):
         """Test getting all folders of a project."""
         requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/project/10000/foldertree/testcase?startAt=0&maxResults=200",
                           text=load_fixture("get_folders.json"))
@@ -59,7 +60,7 @@ class TestAdaptavist:
             folders = adaptavist.get_folders(project_key="TEST", folder_type="TEST_CASE")
             assert folders == ["/", "/Test folder"]
 
-    def test_create_folder(self, requests_mock):
+    def test_create_folder(self, requests_mock: Mocker):
         """Test creating a folder in a project."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/folder", text=load_fixture("create_folder.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -76,7 +77,7 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.get_folders"):
             assert adaptavist.create_folder(project_key="TEST", folder_type="TEST_CASE", folder_name="/") is None
 
-    def test_get_test_case(self, requests_mock):
+    def test_get_test_case(self, requests_mock: Mocker):
         """Test getting a single test case of a project."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testcase/JQA-T123", text=load_fixture("get_test_case.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -84,7 +85,7 @@ class TestAdaptavist:
         test_case = adaptavist.get_test_case(test_case_key="JQA-T123")
         assert test_case["key"] == "JQA-T123"
 
-    def test_get_test_cases(self, requests_mock):
+    def test_get_test_cases(self, requests_mock: Mocker):
         """Test getting all test cases of a project."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testcase/search?query=folder+%3C%3D+%22%2F%22&startAt=0",
                           text=load_fixture("get_test_cases.json"))
@@ -94,7 +95,7 @@ class TestAdaptavist:
         test_cases = adaptavist.get_test_cases()
         assert test_cases[0]["key"] == "JQA-T123"
 
-    def test_create_test_case(self, requests_mock):
+    def test_create_test_case(self, requests_mock: Mocker):
         """Test creating a test case for a project."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/testcase", text=load_fixture("create_test_case.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -109,7 +110,7 @@ class TestAdaptavist:
             adaptavist.create_test_case(project_key="JQA", test_case_name="Ensure the axial-flow pump is enabled")
             assert post.call_args_list[0][0][1]['folder'] is None
 
-    def test_edit_test_case(self, requests_mock):
+    def test_edit_test_case(self, requests_mock: Mocker):
         """Test editing a test case of a project."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testcase/JQA-T123")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -139,14 +140,14 @@ class TestAdaptavist:
             assert adaptavist.edit_test_case(test_case_key="JQA-T123", folder="/", build_urls=["-", "mock://gitlab"])
             assert put.call_args_list[0][0][1]['customFields'] == {"ci_server_url": "mock://gitlab"}
 
-    def test_delete_test_case(self, requests_mock):
+    def test_delete_test_case(self, requests_mock: Mocker):
         """Test deleting a test case of a project."""
         requests_mock.delete(f"{TestAdaptavist._adaptavist_api_url}/testcase/JQA-T123")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
         assert adaptavist.delete_test_case(test_case_key="JQA-T123")
 
-    def test_get_test_case_links(self, requests_mock):
+    def test_get_test_case_links(self, requests_mock: Mocker):
         """Test getting a list of test cases linked to an issue."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/issuelink/JQA-1234/testcases", text=load_fixture("get_test_case_links.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -154,7 +155,7 @@ class TestAdaptavist:
         test_cases = adaptavist.get_test_case_links(issue_key="JQA-1234")
         assert test_cases[0]["key"] == "JQA-T123"
 
-    def test_link_test_cases(self, requests_mock):
+    def test_link_test_cases(self, requests_mock: Mocker):
         """Test linking an issue to test cases."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testcase/JQA-T123")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -174,7 +175,7 @@ class TestAdaptavist:
             assert adaptavist.link_test_cases(issue_key="JQA-123", test_case_keys=["JQA-T123"])
             assert put.assert_not_called
 
-    def test_unlink_test_cases(self, requests_mock):
+    def test_unlink_test_cases(self, requests_mock: Mocker):
         """Test unlinking an issue from a test cases."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testcase/JQA-T123")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -196,7 +197,7 @@ class TestAdaptavist:
             assert adaptavist.unlink_test_cases(issue_key="JQA-123", test_case_keys=["JQA-T123"])
             assert put.assert_not_called
 
-    def test_get_test_plan(self, requests_mock):
+    def test_get_test_plan(self, requests_mock: Mocker):
         """Test getting a test plan of a project."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testplan/JQA-P1234", text=load_fixture("get_test_plan.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -204,7 +205,7 @@ class TestAdaptavist:
         test_plan = adaptavist.get_test_plan(test_plan_key="JQA-P1234")
         assert test_plan["key"] == "JQA-P123"
 
-    def test_get_test_plans(self, requests_mock):
+    def test_get_test_plans(self, requests_mock: Mocker):
         """Test getting all test plans of a project."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testplan/search?query=folder+%3C%3D+%22%2F%22&startAt=0",
                           text=load_fixture("get_test_plans.json"))
@@ -214,7 +215,7 @@ class TestAdaptavist:
         test_plan = adaptavist.get_test_plans()
         assert test_plan[0]["key"] == "JQA-P123"
 
-    def test_create_test_plan(self, requests_mock):
+    def test_create_test_plan(self, requests_mock: Mocker):
         """Test creating a test plan for a project."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/testplan", text=load_fixture("create_test_plan.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -229,7 +230,7 @@ class TestAdaptavist:
             adaptavist.create_test_plan(project_key="JQA", test_plan_name="Plan for a new version")
             assert post.call_args_list[0][0][1]['folder'] is None
 
-    def test_edit_test_plan(self, requests_mock):
+    def test_edit_test_plan(self, requests_mock: Mocker):
         """Test editing a test plan of a project."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testplan/JQA-P123")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -252,7 +253,7 @@ class TestAdaptavist:
             assert adaptavist.edit_test_plan(test_plan_key="JQA-P123", folder="/", labels=["-", "tested"])
             assert put.call_args_list[0][0][1]['labels'] == ["tested"]
 
-    def test_get_test_run(self, requests_mock):
+    def test_get_test_run(self, requests_mock: Mocker):
         """Test getting a test run of a project by its key."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123", text=load_fixture("get_test_run.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -260,7 +261,7 @@ class TestAdaptavist:
         test_run = adaptavist.get_test_run(test_run_key="JQA-R123")
         assert test_run["key"] == "JQA-R123"
 
-    def test_get_test_run_by_name(self, requests_mock):
+    def test_get_test_run_by_name(self, requests_mock: Mocker):
         """Test getting a test run of a project by its name."""
         requests_mock.get(
             f"{TestAdaptavist._jira_url}/rest/tests/1.0/testrun/search?startAt=0&maxResults=10000&query=testRun.name+%3D+%22Testplan%22&fields=id,key,name",
@@ -274,7 +275,7 @@ class TestAdaptavist:
         assert test_run["key"] == "JQA-R123"
         assert test_run["name"] == "Testplan"
 
-    def test_get_test_runs(self, requests_mock):
+    def test_get_test_runs(self, requests_mock: Mocker):
         """Test getting all test runs of a project."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testrun/search?query=folder+%3D+%22%2F%22&startAt=0", text=load_fixture("get_test_runs.json"))
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testrun/search?query=folder+%3D+%22%2F%22&startAt=1", text="[]")
@@ -291,7 +292,7 @@ class TestAdaptavist:
             test_run = adaptavist.get_test_run_links(issue_key="JQA-123")
             assert test_run[0]["key"] == "JQA-R123"
 
-    def test_create_test_run(self, requests_mock):
+    def test_create_test_run(self, requests_mock: Mocker):
         """Test creating a test run for a project."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/testrun", text=load_fixture("create_test_run.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -336,7 +337,7 @@ class TestAdaptavist:
             test_run = adaptavist.clone_test_run(test_run_key="JQA-R123")
             assert create_test_run.call_args_list[0][1]["test_run_name"] == "Full regression (cloned from JQA-R123)"
 
-    def test_get_test_execution_results(self, requests_mock):
+    def test_get_test_execution_results(self, requests_mock: Mocker):
         """Test getting all test execution results."""
         requests_mock.get(f"{TestAdaptavist._jira_url}/rest/tests/1.0/reports/testresults?startAt=0&maxResults=10000",
                           text=load_fixture("get_test_execution_results.json"))
@@ -346,7 +347,7 @@ class TestAdaptavist:
         results = adaptavist.get_test_execution_results()
         assert results[0]["key"] == "JQA-E123"
 
-    def test_get_test_results(self, requests_mock):
+    def test_get_test_results(self, requests_mock: Mocker):
         """Test getting test results of a test run."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-T123/testresults", text=load_fixture("get_test_results.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -354,7 +355,7 @@ class TestAdaptavist:
         results = adaptavist.get_test_results(test_run_key="JQA-T123")
         assert results[0]["testCaseKey"] == "JQA-T123"
 
-    def test_create_test_results(self, requests_mock):
+    def test_create_test_results(self, requests_mock: Mocker):
         """Test creating test results."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123/testresults", text=load_fixture("create_test_results.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -377,7 +378,7 @@ class TestAdaptavist:
             result = adaptavist.get_test_result(test_run_key="JQA-R123", test_case_key="JQA-T123")
             assert result["testCaseKey"] == "JQA-T123"
 
-    def test_create_test_result(self, requests_mock):
+    def test_create_test_result(self, requests_mock: Mocker):
         """Test creating a test result."""
         requests_mock.post(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123/testcase/JQA-T123/testresult", text=load_fixture("create_test_result.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -403,7 +404,7 @@ class TestAdaptavist:
             assert not hasattr(post.call_args_list[0][0][1], "executionTime")
             assert not hasattr(post.call_args_list[0][0][1], "issueLinks")
 
-    def test_edit_test_result_status(self, requests_mock):
+    def test_edit_test_result_status(self, requests_mock: Mocker):
         """Test creating a test result."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123/testcase/JQA-T123/testresult")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -438,11 +439,11 @@ class TestAdaptavist:
             assert not hasattr(put.call_args_list[0][0][1], "executionTime")
             assert not hasattr(put.call_args_list[0][0][1], "issueLinks")
 
-    def test_get_test_result_attachement(self, requests_mock):
+    def test_get_test_result_attachement(self, requests_mock: Mocker):
         """Test getting test result attachments."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testresult/123/attachments", text=load_fixture("get_test_result_attachments.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
-        
+
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}):
             attachments = adaptavist.get_test_result_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123")
             assert len(attachments) == 2
@@ -470,7 +471,7 @@ class TestAdaptavist:
             attachment.name = "testdata.txt"
             assert adaptavist.add_test_result_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123", attachment=attachment)
 
-    def test_edit_test_script_status(self, requests_mock):
+    def test_edit_test_script_status(self, requests_mock: Mocker):
         """Test editing a test stript."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123/testcase/JQA-T123/testresult")
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
@@ -512,11 +513,11 @@ class TestAdaptavist:
             assert not hasattr(put.call_args_list[0][0][1], "assignedTo")
             assert not hasattr(put.call_args_list[0][0][1], "executedBy")
 
-    def test_get_test_script_attachment(self, requests_mock):
+    def test_get_test_script_attachment(self, requests_mock: Mocker):
         """Test getting test script result attachments."""
         requests_mock.get(f"{TestAdaptavist._adaptavist_api_url}/testresult/123/step/0/attachments", text=load_fixture("get_test_result_attachments.json"))
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
-        
+
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}):
             attachments = adaptavist.get_test_script_attachment(test_run_key="JQA-R123", test_case_key="JQA-T123", step=1)
             assert len(attachments) == 2

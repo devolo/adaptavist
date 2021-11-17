@@ -9,7 +9,7 @@ import requests
 import requests_toolbelt
 
 from ._helper import build_folder_names, get_executor, raise_on_kwargs_not_empty, update_field, update_multiline_field
-from .const import PRIORITY_NORMAL, STATUS_APPROVED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
+from .const import PRIORITY_NORMAL, STATUS_APPROVED, STATUS_NOT_EXECUTED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
 
 
 class Adaptavist:
@@ -29,7 +29,7 @@ class Adaptavist:
         self._adaptavist_api_url = self.jira_server + "/rest/atm/1.0"
         self._authentication = requests.auth.HTTPBasicAuth(self.jira_username, jira_password)
         self._headers = {"Accept": "application/json", "Content-type": "application/json"}
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger = logging.getLogger(__name__)
 
     def get_users(self) -> List[str]:
         """
@@ -37,7 +37,7 @@ class Adaptavist:
 
         :returns: List of user keys
         """
-        users: List = []
+        users: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self.jira_server}/rest/api/2/user/search?username=.&startAt={i}&maxResults=200"
@@ -73,7 +73,7 @@ class Adaptavist:
         request = self._get(request_url)
         return request.json() if request else []
 
-    def create_environment(self, project_key: str, environment_name: str, **kwargs) -> Optional[int]:
+    def create_environment(self, project_key: str, environment_name: str, **kwargs: Any) -> Optional[int]:
         """
         Create a new environment.
 
@@ -157,7 +157,7 @@ class Adaptavist:
         :param search_mask: Search mask to match test cases
         :returns: List of test cases
         """
-        test_cases: List = []
+        test_cases: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self._adaptavist_api_url}/testcase/search?query={quote_plus(search_mask)}&startAt={i}"
@@ -171,7 +171,7 @@ class Adaptavist:
 
         return test_cases
 
-    def create_test_case(self, project_key: str, test_case_name: str, **kwargs) -> Optional[int]:
+    def create_test_case(self, project_key: str, test_case_name: str, **kwargs: Any) -> Optional[int]:
         """
         Create a new test case.
 
@@ -221,7 +221,7 @@ class Adaptavist:
         request = self._post(request_url, request_data)
         return request.json()["key"] if request else None
 
-    def edit_test_case(self, test_case_key: str, **kwargs) -> bool:
+    def edit_test_case(self, test_case_key: str, **kwargs: Any) -> bool:
         """
         Edit given test case.
 
@@ -379,7 +379,7 @@ class Adaptavist:
         :param search_mask: Search mask to match test plans
         :returns: List of test plans
         """
-        test_plans: List = []
+        test_plans: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self._adaptavist_api_url}/testplan/search?query={quote_plus(search_mask)}&startAt={i}"
@@ -392,7 +392,7 @@ class Adaptavist:
             i += len(result)
         return test_plans
 
-    def create_test_plan(self, project_key: str, test_plan_name: str, **kwargs) -> Optional[str]:
+    def create_test_plan(self, project_key: str, test_plan_name: str, **kwargs: Any) -> Optional[str]:
         """
         Create a new test plan.
 
@@ -432,7 +432,7 @@ class Adaptavist:
         request = self._post(request_url, request_data)
         return request.json()["key"] if request else None
 
-    def edit_test_plan(self, test_plan_key: str, **kwargs) -> bool:
+    def edit_test_plan(self, test_plan_key: str, **kwargs: Any) -> bool:
         """
         Edit given test plan.
 
@@ -500,7 +500,7 @@ class Adaptavist:
         :param test_run_name: Test run name to look for
         :returns: Info about the test run
         """
-        test_runs: List = []
+        test_runs: List[Dict[str, Any]] = []
         i = 0
         search_mask = quote_plus(f"testRun.name = \"{test_run_name}\"")
         while True:
@@ -514,7 +514,7 @@ class Adaptavist:
             i += len(results)
         return {key: test_runs[-1][key] for key in ["key", "name"]} if test_runs else {}
 
-    def get_test_runs(self, search_mask: str = "folder = \"/\"", **kwargs) -> List[Dict[str, Any]]:
+    def get_test_runs(self, search_mask: str = "folder = \"/\"", **kwargs: Any) -> List[Dict[str, Any]]:
         """
         Get a list of test runs matching the search mask.
         Unfortunately, /testrun/search does not support empty query, so we use a basic filter here to get all test runs, if no search mask is given.
@@ -529,7 +529,7 @@ class Adaptavist:
         fields: str = kwargs.pop("fields", "")
         raise_on_kwargs_not_empty(kwargs)
 
-        test_runs: List = []
+        test_runs: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self._adaptavist_api_url}/testrun/search?query={quote_plus(search_mask)}&startAt={i}&maxResults=1000&fields={quote_plus(fields)}"
@@ -553,7 +553,7 @@ class Adaptavist:
         self._logger.debug("Looking for test runs linked to %s", issue_key)
         return [test_run for test_run in test_runs if test_run["issueKey"] == issue_key]
 
-    def create_test_run(self, project_key: str, test_run_name: str, **kwargs) -> Optional[str]:
+    def create_test_run(self, project_key: str, test_run_name: str, **kwargs: Any) -> Optional[str]:
         """
         Create a new test run.
 
@@ -575,12 +575,10 @@ class Adaptavist:
 
         self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
-        test_cases_list_of_dicts = [
-            {
-                "testCaseKey": test_case_key,
-                "environment": environment or None,
-            } for test_case_key in test_cases
-        ]
+        test_cases_list_of_dicts = [{
+            "testCaseKey": test_case_key,
+            "environment": environment or None,
+        } for test_case_key in test_cases]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
         request_data = {
@@ -591,11 +589,11 @@ class Adaptavist:
             "issueKey": issue_key or None,
             "items": test_cases_list_of_dicts,
         }
-        self._logger.debug("Creating new test run in project %s with name '%s'", test_plan_key, test_run_name)
+        self._logger.debug("Creating new test run in project %s with name '%s'", project_key, test_run_name)
         request = self._post(request_url, request_data)
         return request.json()["key"] if request else None
 
-    def clone_test_run(self, test_run_key: str, test_run_name: str = "", **kwargs) -> Optional[str]:
+    def clone_test_run(self, test_run_key: str, test_run_name: str = "", **kwargs: Any) -> Optional[str]:
         """
         Clone a given test run.
 
@@ -647,7 +645,7 @@ class Adaptavist:
                                  If false, returns all test results, i.e. even those ones that have been overwritten
         :returns: Test results
         """
-        test_results: List = []
+        test_results: List[Dict[str, Any]] = []
         i = 0
         while True:
             request_url = f"{self.jira_server}/rest/tests/1.0/reports/testresults?startAt={i}&maxResults=10000"
@@ -686,9 +684,14 @@ class Adaptavist:
         request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/testresults"
         self._logger.debug("Getting all test results for run %s", test_run_key)
         request = self._get(request_url)
-        return request.json() if request else []
+        if not request:
+            return []
+        results = request.json()
+        for result in results:
+            result["scriptResults"] = sorted(result["scriptResults"], key=lambda result: result["index"])
+        return results
 
-    def create_test_results(self, test_run_key: str, results: List[Dict[str, Any]], exclude_existing_test_cases: bool = True, **kwargs) -> List[int]:
+    def create_test_results(self, test_run_key: str, results: List[Dict[str, Any]], exclude_existing_test_cases: bool = True, **kwargs: Any) -> List[int]:
         """
         Create new test results for a given test run.
 
@@ -744,7 +747,7 @@ class Adaptavist:
                 return item
         return {}
 
-    def create_test_result(self, test_run_key: str, test_case_key: str, status: str = "", **kwargs) -> Optional[int]:
+    def create_test_result(self, test_run_key: str, test_case_key: str, status: str = STATUS_NOT_EXECUTED, **kwargs: Any) -> Optional[int]:
         """
         Create a new test result for a given test run and test case with the given status.
 
@@ -787,7 +790,7 @@ class Adaptavist:
         request = self._post(request_url, request_data)
         return request.json()["id"] if request else None
 
-    def edit_test_result_status(self, test_run_key: str, test_case_key: str, status: str, **kwargs) -> bool:
+    def edit_test_result_status(self, test_run_key: str, test_case_key: str, status: str, **kwargs: Any) -> bool:
         """
         Edit the last existing test result for a given test run and test case with the given status.
 
@@ -859,7 +862,7 @@ class Adaptavist:
             if isinstance(attachment, str) \
             else self._upload_file(request_url, attachment, filename)
 
-    def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs) -> bool:
+    def edit_test_script_status(self, test_run_key: str, test_case_key: str, step: int, status: str, **kwargs: Any) -> bool:
         """
         Edit test script result for a given test run and test case with the given status.
 
