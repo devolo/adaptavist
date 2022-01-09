@@ -578,7 +578,7 @@ class Adaptavist:
 
         test_cases_list_of_dicts = [{
             "testCaseKey": test_case_key,
-            "environment": environment or None
+            "environment": environment or None,
         } for test_case_key in test_cases]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
