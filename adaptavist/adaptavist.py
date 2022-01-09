@@ -564,6 +564,7 @@ class Adaptavist:
         :key test_plan_key: Test plan key to link this test run to
         :key test_cases: List of test case keys to be linked to the test run ex. ["TEST-T1026","TEST-T1027"]
         :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
+        :key version: Application version that should be used for test cycle execution
         :return: Key of the test run created
         """
         folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")
@@ -571,6 +572,7 @@ class Adaptavist:
         test_plan_key: str = kwargs.pop("test_plan_key", "")
         test_cases: List[str] = kwargs.pop("test_cases", [])
         environment: str = kwargs.pop("environment", "")
+        version: str = kwargs.pop("version", "")
         raise_on_kwargs_not_empty(kwargs)
 
         self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
@@ -578,6 +580,7 @@ class Adaptavist:
         test_cases_list_of_dicts = [{
             "testCaseKey": test_case_key,
             "environment": environment or None,
+            "version": version or None,
         } for test_case_key in test_cases]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
@@ -585,6 +588,7 @@ class Adaptavist:
             "projectKey": project_key,
             "testPlanKey": test_plan_key or None,
             "name": test_run_name,
+            "version": version or None,
             "folder": None if folder == "/" else folder,  # The API uses null for the root folder
             "issueKey": issue_key or None,
             "items": test_cases_list_of_dicts,
