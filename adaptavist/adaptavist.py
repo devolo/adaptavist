@@ -564,7 +564,7 @@ class Adaptavist:
         :key test_plan_key: Test plan key to link this test run to
         :key test_cases: List of test case keys to be linked to the test run ex. ["TEST-T1026","TEST-T1027"]
         :key environment: Environment to distinguish multiple executions (call get_environments() to get a list of available ones)
-        :key version: Aplication version that should be used for test cycle execution
+        :key version: Application version that should be used for test cycle execution
         :return: Key of the test run created
         """
         folder: str = f"/{kwargs.pop('folder', '')}".replace("//", "/")
