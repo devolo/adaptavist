@@ -571,19 +571,21 @@ class Adaptavist:
         test_plan_key: str = kwargs.pop("test_plan_key", "")
         test_cases: List[str] = kwargs.pop("test_cases", [])
         environment: str = kwargs.pop("environment", "")
+        version: str = kwargs.pop("version", "")
         raise_on_kwargs_not_empty(kwargs)
 
         self.create_folder(project_key=project_key, folder_type=TEST_RUN, folder_name=folder)
 
         test_cases_list_of_dicts = [{
             "testCaseKey": test_case_key,
-            "environment": environment or None,
+            "environment": environment or None
         } for test_case_key in test_cases]
 
         request_url = f"{self._adaptavist_api_url}/testrun"
         request_data = {
             "projectKey": project_key,
             "testPlanKey": test_plan_key or None,
+            "version": version or None,
             "name": test_run_name,
             "folder": None if folder == "/" else folder,  # The API uses null for the root folder
             "issueKey": issue_key or None,
