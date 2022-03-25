@@ -305,7 +305,7 @@ class Adaptavist:
             "Getting list of issues linked to %s", issue_key, request_url
         )
 
-    def get_json(self, log_string: str, key: str, request_url:str) -> List[Dict[str, str]]:
+    def get_json(self, log_string: str, key: str, request_url: str) -> List[Dict[str, str]]:
         self._logger.debug(log_string, key)
         request = self._get(request_url)
         return request.json() if request else []
