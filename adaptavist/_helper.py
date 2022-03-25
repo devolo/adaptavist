@@ -45,9 +45,10 @@ def update_field(current_values: List[Any], request_data: Dict[str, Any], key: s
 
 def update_multiline_field(current_content: str, request_data: Dict[str, Any], key: str, new_values: List[str]) -> None:
     """Update a multiline custom field (html) with additional or new values."""
-    new_content = "" if new_values and new_values[0] == "-" else current_content
     if new_values and new_values[0] == "-":
-        new_values = new_values[1:]
-    combined_values = "<br>".join(value for value in new_values if value not in new_content)
+        combined_values = "<br>".join(list(dict.fromkeys(new_values[1:]).keys()))
+    else:
+        new_values.insert(0, current_content)
+        combined_values = "<br>".join(list(dict.fromkeys(new_values).keys()))
     if current_content != combined_values:
         request_data.setdefault("customFields", {})[key] = combined_values
