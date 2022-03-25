@@ -15,10 +15,8 @@ def get_executor() -> str:
 
 def build_folder_names(result: Dict[str, Any], folder_name: str = "") -> List[Any]:
     """Build list of folder names from a hierarchical dictionary."""
-    folders = []
     folder_name = "/".join((folder_name, result.get("name", ""))).replace("//", "/")
-    folders.append(folder_name)
-
+    folders = [folder_name]
     if not result.get("children"):
         return folders
 
@@ -37,12 +35,12 @@ def raise_on_kwargs_not_empty(kwargs):
 def update_field(current_values: List[Any], request_data: Dict[str, Any], key: str, new_values: List[Any]) -> None:
     """Append list entries to an existing list and add it to a dictionary, if the new list is different."""
     if new_values and new_values[0] == "-" and current_values != new_values[1:]:
-        request_data.update({key: new_values[1:]})
+        request_data[key] = new_values[1:]
         return
 
     combined_values = current_values + list(set(new_values) - set(current_values))
     if current_values != combined_values:
-        request_data.update({key: combined_values})
+        request_data[key] = combined_values
 
 
 def update_multiline_field(current_content: str, request_data: Dict[str, Any], key: str, new_values: List[str]) -> None:
