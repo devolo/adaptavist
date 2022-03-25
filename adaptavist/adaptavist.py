@@ -26,7 +26,7 @@ class Adaptavist:
         self.jira_server = jira_server
         self.jira_username = jira_username
 
-        self._adaptavist_api_url = self.jira_server + "/rest/atm/1.0"
+        self._adaptavist_api_url = f'{self.jira_server}/rest/atm/1.0'
         self._authentication = requests.auth.HTTPBasicAuth(self.jira_username, jira_password)
         self._headers = {"Accept": "application/json", "Content-type": "application/json"}
         self._logger = logging.getLogger(__name__)
@@ -69,9 +69,9 @@ class Adaptavist:
         :returns: List of environments
         """
         request_url = f"{self._adaptavist_api_url}/environments?projectKey={quote_plus(project_key)}"
-        self._logger.debug("Asking environments in project '%s'.", project_key)
-        request = self._get(request_url)
-        return request.json() if request else []
+        return self.get_json(
+            "Asking environments in project '%s'.", project_key, request_url
+        )
 
     def create_environment(self, project_key: str, environment_name: str, **kwargs: Any) -> Optional[int]:
         """
@@ -163,7 +163,7 @@ class Adaptavist:
             request_url = f"{self._adaptavist_api_url}/testcase/search?query={quote_plus(search_mask)}&startAt={i}"
             self._logger.debug("Asking for test cases with search mask '%s' starting at %i", search_mask, i + 1)
             request = self._get(request_url)
-            result = [] if not request else request.json()
+            result = request.json() if request else []
             if not result:
                 break
             test_cases = [*test_cases, *result]
@@ -301,7 +301,12 @@ class Adaptavist:
         :returns: List of linked test cases
         """
         request_url = f"{self._adaptavist_api_url}/issuelink/{issue_key}/testcases"
-        self._logger.debug("Getting list of issues linked to %s", issue_key)
+        return self.get_json(
+            "Getting list of issues linked to %s", issue_key, request_url
+        )
+
+    def get_json(self, log_string: str, key: str, request_url:str) -> List[Dict[str, str]]:
+        self._logger.debug(log_string, key)
         request = self._get(request_url)
         return request.json() if request else []
 
@@ -507,7 +512,7 @@ class Adaptavist:
             request_url = f"{self.jira_server}/rest/tests/1.0/testrun/search?startAt={i}&maxResults=10000&query={search_mask}&fields=id,key,name"
             self._logger.debug("Asking for 10000 test runs starting at %i", i + 1)
             request = self._get(request_url)
-            results = [] if not request else request.json()["results"]
+            results = request.json()["results"] if request else []
             if not results:
                 break
             test_runs = [*test_runs, *results]
@@ -535,7 +540,7 @@ class Adaptavist:
             request_url = f"{self._adaptavist_api_url}/testrun/search?query={quote_plus(search_mask)}&startAt={i}&maxResults=1000&fields={quote_plus(fields)}"
             self._logger.debug("Asking for 1000 test runs starting at %i using search mask %s", i + 1, search_mask)
             request = self._get(request_url)
-            result = [] if not request else request.json()
+            result = request.json() if request else []
             if not result:
                 break
             test_runs = [*test_runs, *result]
@@ -655,7 +660,7 @@ class Adaptavist:
             request_url = f"{self.jira_server}/rest/tests/1.0/reports/testresults?startAt={i}&maxResults=10000"
             self._logger.debug("Asking for 10000 test results starting at %i", i + 1)
             request = self._get(request_url)
-            results = [] if not request else request.json()["results"]
+            results = request.json()["results"] if request else []
             if not results:
                 break
             test_results = [*test_results, *results]
@@ -746,10 +751,9 @@ class Adaptavist:
         :returns: Test result
         """
         response = self.get_test_results(test_run_key)
-        for item in response:
-            if item["testCaseKey"] == test_case_key:
-                return item
-        return {}
+        return next(
+            (item for item in response if item["testCaseKey"] == test_case_key), {}
+        )
 
     def create_test_result(self, test_run_key: str, test_case_key: str, status: str = STATUS_NOT_EXECUTED, **kwargs: Any) -> Optional[int]:
         """
@@ -995,9 +999,12 @@ class Adaptavist:
     def _upload_file(self, request_url: str, attachment: BinaryIO, filename: str) -> bool:
         """Upload file to Adaptavist."""
         stream = requests_toolbelt.MultipartEncoder(fields={"file": (filename, attachment, "application/octet-stream")})
-        headers = {**self._headers}
-        headers["Content-type"] = stream.content_type
-        headers["X-Atlassian-Token"] = "nocheck"
+        headers = {
+            **self._headers,
+            "Content-type": stream.content_type,
+            "X-Atlassian-Token": "nocheck",
+        }
+
         filename = filename or attachment.name
 
         try:
