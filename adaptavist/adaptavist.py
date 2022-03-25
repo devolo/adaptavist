@@ -69,9 +69,7 @@ class Adaptavist:
         :returns: List of environments
         """
         request_url = f"{self._adaptavist_api_url}/environments?projectKey={quote_plus(project_key)}"
-        return self.get_json(
-            "Asking environments in project '%s'.", project_key, request_url
-        )
+        return self.get_json("Asking environments in project '%s'.", project_key, request_url)
 
     def create_environment(self, project_key: str, environment_name: str, **kwargs: Any) -> Optional[int]:
         """
@@ -301,9 +299,7 @@ class Adaptavist:
         :returns: List of linked test cases
         """
         request_url = f"{self._adaptavist_api_url}/issuelink/{issue_key}/testcases"
-        return self.get_json(
-            "Getting list of issues linked to %s", issue_key, request_url
-        )
+        return self.get_json("Getting list of issues linked to %s", issue_key, request_url)
 
     def get_json(self, log_string: str, key: str, request_url: str) -> List[Dict[str, str]]:
         self._logger.debug(log_string, key)
@@ -751,9 +747,7 @@ class Adaptavist:
         :returns: Test result
         """
         response = self.get_test_results(test_run_key)
-        return next(
-            (item for item in response if item["testCaseKey"] == test_case_key), {}
-        )
+        return next((item for item in response if item["testCaseKey"] == test_case_key), {})
 
     def create_test_result(self, test_run_key: str, test_case_key: str, status: str = STATUS_NOT_EXECUTED, **kwargs: Any) -> Optional[int]:
         """
