@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- Minor optimizations
+- Toggling build_url and code_base
+- Minor optimizationn
+
 
 ## [2.2.0] - 2022/01/10
 
