@@ -1,0 +1,5 @@
+[flake8]
+max-complexity = 10
+max-cognitive-complexity = 10
+max-line-length = 160
+ignore = E203,E303,W503
