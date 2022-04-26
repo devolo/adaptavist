@@ -1,0 +1,13 @@
+[tool.black]
+line-length = 127
+
+[tool.isort]
+filter_files = true
+ignore_whitespace = true
+line_length = 127
+multi_line_output = 1
+order_by_type = true
+profile = "black"
+
+[tools.mypy]
+ignore_missing_imports = true
