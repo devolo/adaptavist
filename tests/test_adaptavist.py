@@ -157,6 +157,15 @@ class TestAdaptavist:
             assert adaptavist.edit_test_case(test_case_key="JQA-T123", folder="/", build_urls=["-", "mock://gitlab"])
             assert put.call_args_list[0][0][1]["customFields"] == {"ci_server_url": "mock://gitlab"}
 
+        # Test that existing custom fields are not appended if the text is the same.
+        with patch(
+            "adaptavist.Adaptavist.get_test_case",
+            return_value={"name": "Test case", "projectKey": "JQA", "customFields": {"code_base_url": "mock://gitlab"}},
+        ), patch("adaptavist.Adaptavist.create_folder"), patch("adaptavist.Adaptavist._put") as put:
+            assert adaptavist.edit_test_case(test_case_key="JQA-T123", folder="/", code_bases=["mock://gitlab"])
+            with raises(KeyError):  #  As we don't expect that the field is set, this lookup must raise a KeyError
+                put.call_args_list[0][0][1]["customFields"]
+
     def test_delete_test_case(self, requests_mock: Mocker):
         """Test deleting a test case of a project."""
         requests_mock.delete(f"{TestAdaptavist._adaptavist_api_url}/testcase/JQA-T123")

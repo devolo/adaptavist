@@ -48,6 +48,10 @@ def update_multiline_field(current_content: str, request_data: Dict[str, Any], k
     if new_values and new_values[0] == "-":
         combined_values = "<br>".join(list(dict.fromkeys(new_values[1:]).keys()))
     else:
+        if all(
+            value in current_content for value in new_values
+        ):  # No need to update the field if all new values are already set in the current content
+            return
         new_values.insert(0, current_content)
         combined_values = "<br>".join(list(dict.fromkeys(new_values).keys()))
     if current_content != combined_values:
