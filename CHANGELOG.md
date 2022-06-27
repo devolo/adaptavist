@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [2.2.2] - 2022/06/27
 
-### Fixed version
+### Fixed
+
 - Custom fields were appended even if the text were the same.
 
 ## [2.2.1] - 2022/03/25
