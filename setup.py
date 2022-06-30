@@ -15,7 +15,7 @@ setup(
     package_data={"adaptavist": ["py.typed"]},
     platforms="any",
     python_requires=">=3.6",
-    install_requires=["importlib-metadata;python_version<'3.8'", "pbr", "requests_toolbelt", "requests"],
+    install_requires=["importlib-metadata;python_version<'3.8'", "requests_toolbelt", "requests"],
     extras_require={
         "test": ["pytest", "requests-mock"],
         "docs": ["m2r2", "pydata_sphinx_theme", "sphinx"],
