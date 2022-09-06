@@ -4,8 +4,7 @@ import json
 import logging
 from typing import Any, BinaryIO, Dict, List, Optional, Union
 from urllib.parse import quote_plus
-import urllib3
-urllib3.disable_warnings()
+
 import requests
 import requests_toolbelt
 
