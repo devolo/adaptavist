@@ -4,7 +4,8 @@ import json
 import logging
 from typing import Any, BinaryIO, Dict, List, Optional, Union
 from urllib.parse import quote_plus
-
+import urllib3
+urllib3.disable_warnings()
 import requests
 import requests_toolbelt
 
@@ -881,6 +882,24 @@ class Adaptavist:
         """
         test_result_id = self.get_test_result(test_run_key, test_case_key)["id"]
         request_url = f"{self._adaptavist_api_url}/testresult/{test_result_id}/attachments"
+        return (
+            self._upload_file_by_name(request_url, attachment, filename)
+            if isinstance(attachment, str)
+            else self._upload_file(request_url, attachment, filename)
+        )
+
+    def add_test_run_attachment(
+        self, test_run_key: str, attachment: Union[str, BinaryIO], filename: str = ""
+    ) -> bool:
+        """
+        Add attachment to a test run.
+
+        :param test_run_key: Test run key. ex. "JQA-R1234"
+        :param attachment: The attachment as filepath name or file-like object
+        :param filename: The optional filename
+        :returns: True if succeeded, False if not
+        """
+        request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}/attachments"
         return (
             self._upload_file_by_name(request_url, attachment, filename)
             if isinstance(attachment, str)
