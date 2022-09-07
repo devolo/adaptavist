@@ -888,8 +888,7 @@ class Adaptavist:
         )
 
     def add_test_run_attachment(
-        self, test_run_key: str, attachment: Union[str, BinaryIO], filename: str = ""
-    ) -> bool:
+        self, test_run_key: str, attachment: Union[str, BinaryIO], filename: str = "" ) -> bool:
         """
         Add attachment to a test run.
 
