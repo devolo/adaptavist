@@ -557,6 +557,33 @@ class TestAdaptavist:
                 test_run_key="JQA-R123", test_case_key="JQA-T123", attachment=attachment
             )
 
+    def test_add_test_run_attachment(self):
+        """Test adding an attachment."""
+        adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
+
+        with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
+            "builtins.open", mock_open()
+        ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.post"):
+            assert adaptavist.add_test_run_attachment(
+                test_run_key="JQA-R123", attachment="testfile", filename="testfile"
+            )
+
+        # Test that a file name is needed, if no file handle is given
+        with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), raises(SyntaxError):
+            assert adaptavist.add_test_run_attachment(
+                test_run_key="JQA-R123", attachment="testfile"
+            )
+
+        # Test that we can handle IO objects
+        with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
+            "requests_toolbelt.MultipartEncoder"
+        ), patch("requests.post"):
+            attachment = BytesIO(b"Testdata")
+            attachment.name = "testdata.txt"
+            assert adaptavist.add_test_run_attachment(
+                test_run_key="JQA-R123", attachment=attachment
+            )
+
     def test_edit_test_script_status(self, requests_mock: Mocker):
         """Test editing a test stript."""
         requests_mock.put(f"{TestAdaptavist._adaptavist_api_url}/testrun/JQA-R123/testcase/JQA-T123/testresult")
