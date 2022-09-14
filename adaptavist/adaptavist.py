@@ -1018,7 +1018,9 @@ class Adaptavist:
     def _post(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """POST data to Jira/Adaptavist."""
         try:
-            request = requests.post(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60)
+            request = requests.post(
+                request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60
+            )
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             self._logger.error("request failed. %s %s", ex, request.text)
@@ -1031,7 +1033,9 @@ class Adaptavist:
     def _put(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """PUT data to Jira/Adaptavist."""
         try:
-            request = requests.put(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60)
+            request = requests.put(
+                request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60
+            )
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             self._logger.error("request failed. %s %s", ex, request.text)
@@ -1053,7 +1057,9 @@ class Adaptavist:
         filename = filename or attachment.name
 
         try:
-            request = requests.post(request_url, auth=self._authentication, headers=headers, data=stream)  # pylint: disable=missing-timeout
+            request = requests.post(
+                request_url, auth=self._authentication, headers=headers, data=stream
+            )  # pylint: disable=missing-timeout
             request.raise_for_status()
         except (
             requests.exceptions.ConnectionError,
