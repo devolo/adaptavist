@@ -163,7 +163,7 @@ class TestAdaptavist:
             return_value={"name": "Test case", "projectKey": "JQA", "customFields": {"code_base_url": "mock://gitlab"}},
         ), patch("adaptavist.Adaptavist.create_folder"), patch("adaptavist.Adaptavist._put") as put:
             assert adaptavist.edit_test_case(test_case_key="JQA-T123", folder="/", code_bases=["mock://gitlab"])
-            with raises(KeyError):  #  As we don't expect that the field is set, this lookup must raise a KeyError
+            with raises(KeyError):  # As we don't expect that the field is set, this lookup must raise a KeyError
                 put.call_args_list[0][0][1]["customFields"]
 
     def test_delete_test_case(self, requests_mock: Mocker):
@@ -564,15 +564,11 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
             "builtins.open", mock_open()
         ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.post"):
-            assert adaptavist.add_test_run_attachment(
-                test_run_key="JQA-R123", attachment="testfile", filename="testfile"
-            )
+            assert adaptavist.add_test_run_attachment(test_run_key="JQA-R123", attachment="testfile", filename="testfile")
 
         # Test that a file name is needed, if no file handle is given
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), raises(SyntaxError):
-            assert adaptavist.add_test_run_attachment(
-                test_run_key="JQA-R123", attachment="testfile"
-            )
+            assert adaptavist.add_test_run_attachment(test_run_key="JQA-R123", attachment="testfile")
 
         # Test that we can handle IO objects
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
@@ -580,9 +576,7 @@ class TestAdaptavist:
         ), patch("requests.post"):
             attachment = BytesIO(b"Testdata")
             attachment.name = "testdata.txt"
-            assert adaptavist.add_test_run_attachment(
-                test_run_key="JQA-R123", attachment=attachment
-            )
+            assert adaptavist.add_test_run_attachment(test_run_key="JQA-R123", attachment=attachment)
 
     def test_edit_test_script_status(self, requests_mock: Mocker):
         """Test editing a test stript."""

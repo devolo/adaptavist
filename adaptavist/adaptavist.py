@@ -887,9 +887,7 @@ class Adaptavist:
             else self._upload_file(request_url, attachment, filename)
         )
 
-    def add_test_run_attachment(
-        self, test_run_key: str, attachment: Union[str, BinaryIO], filename: str = ""
-    ) -> bool:
+    def add_test_run_attachment(self, test_run_key: str, attachment: Union[str, BinaryIO], filename: str = "") -> bool:
         """
         Add attachment to a test run.
 
@@ -992,7 +990,7 @@ class Adaptavist:
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""
         try:
-            request = requests.delete(request_url, auth=self._authentication, headers=self._headers)
+            request = requests.delete(request_url, auth=self._authentication, headers=self._headers, timeout=60)
             request.raise_for_status()
         except (
             requests.exceptions.ConnectionError,
@@ -1006,7 +1004,7 @@ class Adaptavist:
     def _get(self, request_url: str) -> Optional[requests.Response]:
         """GET data from Jira/Adaptavist."""
         try:
-            request = requests.get(request_url, auth=self._authentication, headers=self._headers)
+            request = requests.get(request_url, auth=self._authentication, headers=self._headers, timeout=60)
             request.raise_for_status()
         except (
             requests.exceptions.ConnectionError,
@@ -1020,7 +1018,9 @@ class Adaptavist:
     def _post(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """POST data to Jira/Adaptavist."""
         try:
-            request = requests.post(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data))
+            request = requests.post(
+                request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60
+            )
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             self._logger.error("request failed. %s %s", ex, request.text)
@@ -1033,7 +1033,9 @@ class Adaptavist:
     def _put(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """PUT data to Jira/Adaptavist."""
         try:
-            request = requests.put(request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data))
+            request = requests.put(
+                request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60
+            )
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             self._logger.error("request failed. %s %s", ex, request.text)
@@ -1055,7 +1057,9 @@ class Adaptavist:
         filename = filename or attachment.name
 
         try:
-            request = requests.post(request_url, auth=self._authentication, headers=headers, data=stream)
+            request = requests.post(
+                request_url, auth=self._authentication, headers=headers, data=stream
+            )  # pylint: disable=missing-timeout
             request.raise_for_status()
         except (
             requests.exceptions.ConnectionError,
