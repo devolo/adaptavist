@@ -536,7 +536,7 @@ class TestAdaptavist:
 
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
             "builtins.open", mock_open()
-        ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.post"):
+        ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.Session.post"):
             assert adaptavist.add_test_result_attachment(
                 test_run_key="JQA-R123", test_case_key="JQA-T123", attachment="testfile", filename="testfile"
             )
@@ -550,7 +550,7 @@ class TestAdaptavist:
         # Test that we can handle IO objects
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
             "requests_toolbelt.MultipartEncoder"
-        ), patch("requests.post"):
+        ), patch("requests.Session.post"):
             attachment = BytesIO(b"Testdata")
             attachment.name = "testdata.txt"
             assert adaptavist.add_test_result_attachment(
@@ -563,7 +563,7 @@ class TestAdaptavist:
 
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
             "builtins.open", mock_open()
-        ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.post"):
+        ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.Session.post"):
             assert adaptavist.add_test_run_attachment(test_run_key="JQA-R123", attachment="testfile", filename="testfile")
 
         # Test that a file name is needed, if no file handle is given
@@ -573,7 +573,7 @@ class TestAdaptavist:
         # Test that we can handle IO objects
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
             "requests_toolbelt.MultipartEncoder"
-        ), patch("requests.post"):
+        ), patch("requests.Session.post"):
             attachment = BytesIO(b"Testdata")
             attachment.name = "testdata.txt"
             assert adaptavist.add_test_run_attachment(test_run_key="JQA-R123", attachment=attachment)
@@ -645,7 +645,7 @@ class TestAdaptavist:
 
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
             "builtins.open", mock_open()
-        ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.post"):
+        ), patch("requests_toolbelt.MultipartEncoder"), patch("requests.Session.post"):
             assert adaptavist.add_test_script_attachment(
                 test_run_key="JQA-R123", test_case_key="JQA-T123", step=1, attachment="testfile", filename="testfile"
             )
@@ -659,7 +659,7 @@ class TestAdaptavist:
         # Test that we can handle IO objects
         with patch("adaptavist.Adaptavist.get_test_result", return_value={"id": 123}), patch(
             "requests_toolbelt.MultipartEncoder"
-        ), patch("requests.post"):
+        ), patch("requests.Session.post"):
             attachment = BytesIO(b"Testdata")
             attachment.name = "testdata.txt"
             assert adaptavist.add_test_script_attachment(

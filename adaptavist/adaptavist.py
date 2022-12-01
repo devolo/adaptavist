@@ -7,6 +7,7 @@ from urllib.parse import quote_plus
 
 import requests
 import requests_toolbelt
+from requests.auth import HTTPBasicAuth
 
 from ._helper import build_folder_names, get_executor, raise_on_kwargs_not_empty, update_field, update_multiline_field
 from .const import PRIORITY_NORMAL, STATUS_APPROVED, STATUS_NOT_EXECUTED, STEP_TYPE_BY_STEP, TEST_CASE, TEST_PLAN, TEST_RUN
@@ -26,10 +27,15 @@ class Adaptavist:
         self.jira_server = jira_server
         self.jira_username = jira_username
 
+        self._session = requests.Session()
         self._adaptavist_api_url = f"{self.jira_server}/rest/atm/1.0"
-        self._authentication = requests.auth.HTTPBasicAuth(self.jira_username, jira_password)
-        self._headers = {"Accept": "application/json", "Content-type": "application/json"}
+        self._session.auth = HTTPBasicAuth(self.jira_username, jira_password)
+        self._session.headers.update({"Accept": "application/json", "Content-type": "application/json"})
         self._logger = logging.getLogger(__name__)
+
+    def __del__(self):
+        """Close session."""
+        self._session.close()
 
     def get_users(self) -> List[str]:
         """
@@ -990,7 +996,7 @@ class Adaptavist:
     def _delete(self, request_url: str) -> Optional[requests.Response]:
         """DELETE data from Jira/Adaptavist."""
         try:
-            request = requests.delete(request_url, auth=self._authentication, headers=self._headers, timeout=60)
+            request = self._session.delete(request_url, timeout=60)
             request.raise_for_status()
         except (
             requests.exceptions.ConnectionError,
@@ -1004,7 +1010,7 @@ class Adaptavist:
     def _get(self, request_url: str) -> Optional[requests.Response]:
         """GET data from Jira/Adaptavist."""
         try:
-            request = requests.get(request_url, auth=self._authentication, headers=self._headers, timeout=60)
+            request = self._session.get(request_url, timeout=60)
             request.raise_for_status()
         except (
             requests.exceptions.ConnectionError,
@@ -1018,9 +1024,7 @@ class Adaptavist:
     def _post(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """POST data to Jira/Adaptavist."""
         try:
-            request = requests.post(
-                request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60
-            )
+            request = self._session.post(request_url, data=json.dumps(data), timeout=60)
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             self._logger.error("request failed. %s %s", ex, request.text)
@@ -1033,9 +1037,7 @@ class Adaptavist:
     def _put(self, request_url: str, data: Any) -> Optional[requests.Response]:
         """PUT data to Jira/Adaptavist."""
         try:
-            request = requests.put(
-                request_url, auth=self._authentication, headers=self._headers, data=json.dumps(data), timeout=60
-            )
+            request = self._session.put(request_url, data=json.dumps(data), timeout=60)
             request.raise_for_status()
         except requests.exceptions.HTTPError as ex:
             self._logger.error("request failed. %s %s", ex, request.text)
@@ -1049,7 +1051,7 @@ class Adaptavist:
         """Upload file to Adaptavist."""
         stream = requests_toolbelt.MultipartEncoder(fields={"file": (filename, attachment, "application/octet-stream")})
         headers = {
-            **self._headers,
+            **self._session.headers,
             "Content-type": stream.content_type,
             "X-Atlassian-Token": "nocheck",
         }
@@ -1057,9 +1059,7 @@ class Adaptavist:
         filename = filename or attachment.name
 
         try:
-            request = requests.post(
-                request_url, auth=self._authentication, headers=headers, data=stream
-            )  # pylint: disable=missing-timeout
+            request = self._session.post(request_url, headers=headers, data=stream)  # pylint: disable=missing-timeout
             request.raise_for_status()
         except (
             requests.exceptions.ConnectionError,
