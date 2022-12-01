@@ -33,6 +33,10 @@ class Adaptavist:
         self._session.headers.update({"Accept": "application/json", "Content-type": "application/json"})
         self._logger = logging.getLogger(__name__)
 
+    def __del__(self):
+        """Close session."""
+        self._session.close()
+
     def get_users(self) -> List[str]:
         """
         Get a list of users known to Adaptavist/Jira.
