@@ -714,7 +714,8 @@ class Adaptavist:
             return []
         results = request.json()
         for result in results:
-            result["scriptResults"] = sorted(result["scriptResults"], key=lambda result: result.get("index", 0))
+            if len(result["scriptResults"]) > 1:
+                result["scriptResults"] = sorted(result["scriptResults"], key=lambda result: result["index"])
         return results
 
     def create_test_results(
