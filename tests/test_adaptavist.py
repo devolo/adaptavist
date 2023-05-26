@@ -13,6 +13,7 @@ from . import load_fixture
 
 
 class TestAdaptavist:
+    """Test the Adaptavist module."""
 
     _jira_url = "mock://jira"
     _adaptavist_api_url = f"{_jira_url}/rest/atm/1.0"
