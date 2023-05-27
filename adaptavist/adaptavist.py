@@ -764,14 +764,19 @@ class Adaptavist:
 
     def get_test_result(self, test_run_key: str, test_case_key: str) -> Dict[str, Any]:
         """
-        Get the test result for a given test run and test case.
+        Get the last test result for a given test run and test case.
 
         :param test_run_key: Test run key of the result to be updated. ex. "JQA-R1234"
         :param test_case_key: Test case key of the result to be updated. ex. "JQA-T1234"
         :returns: Test result
         """
         response = self.get_test_results(test_run_key)
-        return next((item for item in response if item["testCaseKey"] == test_case_key), {})
+        response = [item for item in response if item["testCaseKey"] == test_case_key]
+        try:
+            response = sorted(response, key=lambda x: x['key'])
+            return response.pop() if response else {}
+        except KeyError:
+            return response.pop(0) or {}
 
     def create_test_result(
         self, test_run_key: str, test_case_key: str, status: str = STATUS_NOT_EXECUTED, **kwargs: Any
