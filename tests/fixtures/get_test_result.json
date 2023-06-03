@@ -1,0 +1,170 @@
+[
+    {
+        "actualEndDate": null,
+        "automated": false,
+        "executedBy": null,
+        "id": 2321154,
+        "key": "JQA-E22091",
+        "projectId": 17267,
+        "scriptResults": [
+            {
+                "description": "Given I go to the home screen\nAnd I click the 'Add new contact' button\nAnd I see the 'New contact' screen\nWhen I enter details\nAnd I click the 'Save contact' button\nThen I should see the 'Contact saved' message",
+                "status": "Not Executed"
+            }
+        ],
+        "status": "Not Executed",
+        "testCaseKey": "JQA-T338"
+    },
+    {
+        "actualEndDate": "2023-05-23T04:02:05.548Z",
+        "actualStartDate": "2023-05-23T04:01:26.037Z",
+        "assignedTo": "automation_bot",
+        "automated": true,
+        "comment": "Hello World Mon May 22 22:01:51 2023<br>Third execution in this cycle",
+        "executedBy": "automation_bot",
+        "executionDate": "2023-05-23T04:02:05.548Z",
+        "id": 2321152,
+        "key": "JQA-E22089",
+        "projectId": 17267,
+        "scriptResults": [
+            {
+                "description": "Step 1",
+                "expectedResult": "Expected 1",
+                "index": 0,
+                "status": "Not Executed",
+                "testData": "Data 1"
+            },
+            {
+                "description": "Step 2",
+                "expectedResult": "Expected 2",
+                "index": 1,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            },
+            {
+                "description": "Step 3",
+                "expectedResult": "Expected 3",
+                "index": 2,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            }
+        ],
+        "status": "Pass",
+        "testCaseKey": "JQA-T123",
+        "userKey": "automation_bot"
+    },
+    {
+        "actualEndDate": "2023-05-23T04:00:54.048Z",
+        "actualStartDate": "2023-05-23T03:59:37.773Z",
+        "assignedTo": "automation_bot",
+        "automated": true,
+        "comment": "Hello World Mon May 22 22:00:40 2023<br>Second execution in this cycle",
+        "executedBy": "automation_bot",
+        "executionDate": "2023-05-23T04:00:54.048Z",
+        "id": 2321151,
+        "key": "JQA-E22088",
+        "projectId": 17267,
+        "scriptResults": [
+            {
+                "description": "Step 1",
+                "expectedResult": "Expected 1",
+                "index": 0,
+                "status": "Not Executed",
+                "testData": "Data 1"
+            },
+            {
+                "description": "Step 2",
+                "expectedResult": "Expected 2",
+                "index": 1,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            },
+            {
+                "description": "Step 3",
+                "expectedResult": "Expected 3",
+                "index": 2,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            }
+        ],
+        "status": "Pass",
+        "testCaseKey": "JQA-T123",
+        "userKey": "automation_bot"
+    },
+    {
+        "actualEndDate": "2023-05-23T04:42:22.537Z",
+        "actualStartDate": "2023-05-23T04:07:28.174Z",
+        "assignedTo": "automation_bot",
+        "automated": true,
+        "comment": "Hello World 2023-05-22 22:42:08.890277<br>Last execution in this cycle",
+        "executedBy": "automation_bot",
+        "executionDate": "2023-05-23T04:42:22.537Z",
+        "id": 2321153,
+        "key": "JQA-E22090",
+        "projectId": 17267,
+        "scriptResults": [
+            {
+                "description": "Step 1",
+                "expectedResult": "Expected 1",
+                "index": 0,
+                "status": "Not Executed",
+                "testData": "Data 1"
+            },
+            {
+                "description": "Step 2",
+                "expectedResult": "Expected 2",
+                "index": 1,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            },
+            {
+                "description": "Step 3",
+                "expectedResult": "Expected 3",
+                "index": 2,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            }
+        ],
+        "status": "Pass",
+        "testCaseKey": "JQA-T123",
+        "userKey": "automation_bot"
+    },
+    {
+        "actualEndDate": "2023-05-23T03:58:41.719Z",
+        "actualStartDate": "2023-05-23T03:58:14.700Z",
+        "assignedTo": "automation_bot",
+        "automated": true,
+        "comment": "Hello World Mon May 22 21:58:28 2023<br>First execution in this cycle",
+        "executedBy": "automation_bot",
+        "executionDate": "2023-05-23T03:58:41.719Z",
+        "id": 2311063,
+        "key": "JQA-E20829",
+        "projectId": 17267,
+        "scriptResults": [
+            {
+                "description": "Step 1",
+                "expectedResult": "Expected 1",
+                "index": 0,
+                "status": "Not Executed",
+                "testData": "Data 1"
+            },
+            {
+                "description": "Step 2",
+                "expectedResult": "Expected 2",
+                "index": 1,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            },
+            {
+                "description": "Step 3",
+                "expectedResult": "Expected 3",
+                "index": 2,
+                "status": "Not Executed",
+                "testData": "Data 2"
+            }
+        ],
+        "status": "Pass",
+        "testCaseKey": "JQA-T123",
+        "userKey": "automation_bot"
+    }
+]
