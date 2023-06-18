@@ -771,12 +771,10 @@ class Adaptavist:
         :returns: Test result
         """
         response = self.get_test_results(test_run_key)
-        response = [item for item in response if item["testCaseKey"] == test_case_key]
-        try:
-            response = sorted(response, key=lambda x: x['key'])
-            return response.pop() if response else {}
-        except KeyError:
-            return response.pop(0) or {}
+        return max(
+            (item for item in response if item["testCaseKey"] == test_case_key),
+            key=lambda item: item["id"],
+        ) or {}
 
     def create_test_result(
         self, test_run_key: str, test_case_key: str, status: str = STATUS_NOT_EXECUTED, **kwargs: Any

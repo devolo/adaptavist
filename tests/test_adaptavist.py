@@ -415,7 +415,8 @@ class TestAdaptavist:
         adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
 
         results = adaptavist.get_test_results(test_run_key="JQA-T123")
-        assert results[0]["testCaseKey"] == "JQA-T123"
+        assert len(results) == 5
+        assert results[1]["testCaseKey"] == "JQA-T123"
 
     def test_create_test_results(self, requests_mock: Mocker):
         """Test creating test results."""
@@ -446,15 +447,7 @@ class TestAdaptavist:
         with patch("adaptavist.Adaptavist.get_test_results", return_value=json.loads(load_fixture("get_test_results.json"))):
             result = adaptavist.get_test_result(test_run_key="JQA-R123", test_case_key="JQA-T123")
             assert result["testCaseKey"] == "JQA-T123"
-
-    def test_get_test_result_when_multiple_results(self):
-        """Test getting a test result of a test run."""
-        adaptavist = Adaptavist(jira_server=TestAdaptavist._jira_url, jira_username="User", jira_password="Password")
-
-        with patch("adaptavist.Adaptavist.get_test_results", return_value=json.loads(load_fixture("get_test_result.json"))):
-            result = adaptavist.get_test_result(test_run_key="JQA-R123", test_case_key="JQA-T123")
-            assert result["testCaseKey"] == "JQA-T123"
-            assert result["key"] == "JQA-E22090"
+            assert result["id"] == 2321153
 
     def test_create_test_result(self, requests_mock: Mocker):
         """Test creating a test result."""
