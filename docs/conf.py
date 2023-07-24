@@ -27,7 +27,7 @@ version = metadata.version(PACKAGE_NAME)
 # -- Project information -----------------------------------------------------
 
 project = PACKAGE_NAME
-copyright = "2021, devolo AG"
+copyright = "2023, devolo GmbH"
 author = metadata.metadata(PACKAGE_NAME)["Authors"] or ""
 
 # -- General configuration ---------------------------------------------------

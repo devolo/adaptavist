@@ -1,4 +1,4 @@
-Copyright (c) 2019 devolo AG
+Copyright (c) 2023 devolo GmbH
 
 The MIT License
 
