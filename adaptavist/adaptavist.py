@@ -21,7 +21,7 @@ class Adaptavist:
     .. seealso:: https://docs.adaptavist.io/tm4j/server/api
     """
 
-    def __init__(self, jira_server: str, jira_username: str, jira_password: str, verify: bool = True):
+    def __init__(self, jira_server: str, jira_username: str, jira_password: str, verify: Union[bool, str] = True):
         """Construct a new Adaptavist instance."""
 
         self.jira_server = jira_server
