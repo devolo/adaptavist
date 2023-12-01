@@ -21,13 +21,14 @@ class Adaptavist:
     .. seealso:: https://docs.adaptavist.io/tm4j/server/api
     """
 
-    def __init__(self, jira_server: str, jira_username: str, jira_password: str):
+    def __init__(self, jira_server: str, jira_username: str, jira_password: str, verify: bool = True):
         """Construct a new Adaptavist instance."""
 
         self.jira_server = jira_server
         self.jira_username = jira_username
 
         self._session = requests.Session()
+        self._session.verify = verify
         self._adaptavist_api_url = f"{self.jira_server}/rest/atm/1.0"
         self._session.auth = HTTPBasicAuth(self.jira_username, jira_password)
         self._session.headers.update({"Accept": "application/json", "Content-type": "application/json"})
