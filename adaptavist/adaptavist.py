@@ -656,7 +656,18 @@ class Adaptavist:
                     self.edit_test_plan(test_plan_key=test_plan["key"], test_runs=[key])
 
         return key
+    
+    def delete_test_run(self, test_run_key: str) -> bool:
+        """
+        Delete given test run.
 
+        :param test_run_key: Test run key to be deleted. ex. "TEST-R2"
+        :returns: True if succeeded, False if not
+        """
+        request_url = f"{self._adaptavist_api_url}/testrun/{test_run_key}"
+        self._logger.debug("Deleting test case %s)", test_run_key)
+        return bool(self._delete(request_url))
+    
     def get_test_execution_results(self, last_result_only: bool = True) -> List[Dict[str, Any]]:
         """
         Get all test results.
